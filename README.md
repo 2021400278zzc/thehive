@@ -46,7 +46,10 @@ requirements.txt          # 项目依赖
 
 ## 安装和配置
 
-1. 克隆仓库
+1. 拉取仓库
+```bash
+git clone https://github.com/2021400278zzc/thehive.git
+```
 
 2. 安装依赖
 ```bash
