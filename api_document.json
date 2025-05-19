@@ -1,0 +1,534 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "TheHive项目协作平台API",
+    "description": "TheHive是一个创业社交网站的项目协作功能，类似于GitHub的项目协作功能，主要以项目制来推动人与人之间的合作。",
+    "version": "1.0.0",
+    "contact": {
+      "name": "TheHive团队"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "本地开发环境"
+    }
+  ],
+  "tags": [
+    {
+      "name": "技能类型",
+      "description": "技能类型相关接口"
+    },
+    {
+      "name": "项目",
+      "description": "项目相关接口"
+    }
+  ],
+  "paths": {
+    "/api/skill-types": {
+      "get": {
+        "tags": ["技能类型"],
+        "summary": "获取所有技能类型",
+        "description": "获取系统中所有可用的技能类型",
+        "operationId": "getSkillTypes",
+        "responses": {
+          "200": {
+            "description": "成功获取技能类型列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SkillType"
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "description": "技能类型总数"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["技能类型"],
+        "summary": "创建技能类型",
+        "description": "创建新的技能类型",
+        "operationId": "createSkillType",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "技能类型名称"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "技能类型描述"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "技能类型创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "技能类型创建成功"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/SkillType"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数有误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects": {
+      "post": {
+        "tags": ["项目"],
+        "summary": "创建项目",
+        "description": "创建新项目，包括项目基本信息和技能需求",
+        "operationId": "createProject",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "project_type", "end_time"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "项目名称"
+                  },
+                  "project_type": {
+                    "type": "string",
+                    "description": "项目类型"
+                  },
+                  "end_time": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "项目结束时间，格式：YYYY-MM-DD HH:MM:SS"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "项目描述"
+                  },
+                  "goal": {
+                    "type": "string",
+                    "description": "项目目标"
+                  },
+                  "skill_requirements": {
+                    "type": "array",
+                    "description": "项目所需技能",
+                    "items": {
+                      "type": "object",
+                      "required": ["skill_type_id", "required_count", "importance"],
+                      "properties": {
+                        "skill_type_id": {
+                          "type": "integer",
+                          "description": "技能类型ID"
+                        },
+                        "required_count": {
+                          "type": "integer",
+                          "description": "所需人数"
+                        },
+                        "importance": {
+                          "type": "integer",
+                          "description": "重要程度(1-5星)",
+                          "minimum": 1,
+                          "maximum": 5
+                        },
+                        "description": {
+                          "type": "string",
+                          "description": "技能需求描述"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "项目创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "项目创建成功"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Project"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数有误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["项目"],
+        "summary": "获取项目列表",
+        "description": "获取项目列表，支持多种过滤条件",
+        "operationId": "getProjects",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "description": "项目名称",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "project_types",
+            "in": "query",
+            "description": "项目类别，多个用逗号分隔",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "项目状态(1-进行中、2-已完成)",
+            "schema": {
+              "type": "integer",
+              "enum": [1, 2]
+            }
+          },
+          {
+            "name": "recruitment_status",
+            "in": "query",
+            "description": "招募状态(1-开放申请、2-招募结束)",
+            "schema": {
+              "type": "integer",
+              "enum": [1, 2]
+            }
+          },
+          {
+            "name": "skill_type_ids",
+            "in": "query",
+            "description": "所需技能类型ID，多个用逗号分隔",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "关键词搜索（搜索项目描述和目标）",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取项目列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Project"
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "description": "项目总数"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{project_id}": {
+      "get": {
+        "tags": ["项目"],
+        "summary": "获取项目详情",
+        "description": "根据项目ID获取项目详细信息",
+        "operationId": "getProjectDetail",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "description": "项目ID",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取项目详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Project"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "项目不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SkillType": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "技能类型ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "技能类型名称"
+          },
+          "description": {
+            "type": "string",
+            "description": "技能类型描述"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "更新时间"
+          }
+        }
+      },
+      "SkillRequirement": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "技能需求ID"
+          },
+          "project_id": {
+            "type": "integer",
+            "description": "所属项目ID"
+          },
+          "skill_type_id": {
+            "type": "integer",
+            "description": "技能类型ID"
+          },
+          "skill_type_name": {
+            "type": "string",
+            "description": "技能类型名称"
+          },
+          "required_count": {
+            "type": "integer",
+            "description": "所需人数"
+          },
+          "importance": {
+            "type": "integer",
+            "description": "重要程度(1-5星)"
+          },
+          "description": {
+            "type": "string",
+            "description": "技能需求描述"
+          }
+        }
+      },
+      "Project": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "项目ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "项目名称"
+          },
+          "project_type": {
+            "type": "string",
+            "description": "项目类型"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "项目结束时间"
+          },
+          "description": {
+            "type": "string",
+            "description": "项目描述"
+          },
+          "goal": {
+            "type": "string",
+            "description": "项目目标"
+          },
+          "status": {
+            "type": "integer",
+            "description": "项目状态：1-进行中、2-已完成"
+          },
+          "status_text": {
+            "type": "string",
+            "description": "项目状态文本描述"
+          },
+          "recruitment_status": {
+            "type": "integer",
+            "description": "招募状态：1-开放申请、2-招募结束"
+          },
+          "recruitment_status_text": {
+            "type": "string",
+            "description": "招募状态文本描述"
+          },
+          "skill_requirements": {
+            "type": "array",
+            "description": "项目所需技能",
+            "items": {
+              "$ref": "#/components/schemas/SkillRequirement"
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "更新时间"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "错误信息"
+          }
+        }
+      }
+    }
+  }
+} 
