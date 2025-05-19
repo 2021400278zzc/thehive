@@ -33,4 +33,6 @@ def create_database():
 
 if __name__ == "__main__":
     create_database()
-    print("现在可以运行 python init_db.py 创建表和初始数据") 
+    print("现在可以运行 python init_db.py 创建表和初始数据")
+    print("注意：创建项目时必须提供 user_id 字段，这是创建者的Auth0用户标识")
+    print("用户表和项目表现在都包含 user_id 字段(Auth0用户标识)和 picture 字段(用户头像URL)") 

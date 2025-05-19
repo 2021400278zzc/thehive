@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
-from app.services.project_service import ProjectService, SkillTypeService
+from app.services.project_service import ProjectService, SkillTypeService, ProjectApplicationService
+from app.models.project import ProjectApplication
 
 project_bp = Blueprint('project', __name__)
 
@@ -47,6 +48,7 @@ def create_project():
         "end_time": "项目结束时间",
         "description": "项目描述",  # 可选
         "goal": "项目目标",  # 可选
+        "user_id": 创建者用户ID,  # 必填
         "skill_requirements": [
             {
                 "skill_type_id": 技能类型ID,
@@ -58,9 +60,9 @@ def create_project():
     }
     """
     data = request.get_json()
-    
+    print(data)
     # 参数验证
-    required_fields = ['name', 'project_type', 'end_time']
+    required_fields = ['name', 'project_type', 'end_time', 'user_id']
     for field in required_fields:
         if field not in data:
             return jsonify({'error': f'缺少必填字段: {field}'}), 400
@@ -83,9 +85,14 @@ def create_project():
             except:
                 return jsonify({'error': f'第{i+1}个技能需求的技能类型ID不存在'}), 400
     
+    # 获取创建者ID
+    user_id = data.get('user_id')
+    
     try:
-        project = ProjectService.create_project(data)
-        return jsonify({'message': '项目创建成功', 'data': project.to_dict()}), 201
+        project = ProjectService.create_project(data, user_id)
+        return jsonify({'message': '项目创建成功', 'data': project.to_dict()}), 200
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
     except Exception as e:
         return jsonify({'error': f'创建项目失败: {str(e)}'}), 500
 
@@ -143,4 +150,114 @@ def get_project_detail(project_id):
         project = ProjectService.get_project_detail(project_id)
         return jsonify({'data': project}), 200
     except Exception as e:
-        return jsonify({'error': f'获取项目详情失败: {str(e)}'}), 500 
+        return jsonify({'error': f'获取项目详情失败: {str(e)}'}), 500
+
+
+@project_bp.route('/project-applications', methods=['POST'])
+def apply_for_project():
+    """
+    申请加入项目API
+    请求参数:
+    {
+        "project_id": 项目ID,
+        "skill_type_id": 技能类型ID,
+        "message": "申请消息"  # 可选
+    }
+    """
+    data = request.get_json()
+    
+    # 参数验证
+    required_fields = ['project_id', 'skill_type_id', 'user_id']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({'error': f'缺少必填字段: {field}'}), 400
+    
+    # 获取申请者ID
+    user_id = data.get('user_id')
+    
+    try:
+        application = ProjectApplicationService.apply_for_project(data, user_id)
+        return jsonify({'message': '申请提交成功', 'data': application.to_dict()}), 201
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': f'提交申请失败: {str(e)}'}), 500
+
+
+@project_bp.route('/project-applications/<int:application_id>', methods=['PUT'])
+def process_application(application_id):
+    """
+    处理项目申请API
+    请求参数:
+    {
+        "status": 状态码(2-接受, 3-拒绝),
+        "response_message": "回复消息",  # 可选
+        "user_id": "处理人ID"  # 必填，必须是项目负责人
+    }
+    """
+    data = request.get_json()
+    
+    # 参数验证
+    if 'status' not in data:
+        return jsonify({'error': '缺少必填字段: status'}), 400
+    
+    if data['status'] not in [ProjectApplication.STATUS_APPROVED, ProjectApplication.STATUS_REJECTED]:
+        return jsonify({'error': '状态码无效，必须为2(接受)或3(拒绝)'}), 400
+    
+    if 'user_id' not in data:
+        return jsonify({'error': '缺少必填字段: user_id'}), 400
+    
+    try:
+        application = ProjectApplicationService.process_application(
+            application_id,
+            data['status'],
+            data.get('response_message'),
+            data['user_id']
+        )
+        return jsonify({'message': '申请处理成功', 'data': application.to_dict()}), 200
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': f'处理申请失败: {str(e)}'}), 500
+
+
+@project_bp.route('/my-applications', methods=['GET'])
+def get_my_applications():
+    """
+    获取我提交的申请列表API
+    
+    请求参数 (URL查询参数):
+    - user_id: 用户ID
+    """
+    user_id = request.args.get('user_id')
+    
+    if not user_id:
+        return jsonify({'error': '缺少必填参数: user_id'}), 400
+    
+    try:
+        applications = ProjectApplicationService.get_my_applications(user_id)
+        return jsonify({'data': applications, 'total': len(applications)}), 200
+    except Exception as e:
+        return jsonify({'error': f'获取申请列表失败: {str(e)}'}), 500
+
+
+@project_bp.route('/projects/<int:project_id>/applications', methods=['GET'])
+def get_project_applications(project_id):
+    """
+    获取项目收到的申请列表API
+    
+    请求参数 (URL查询参数):
+    - user_id: 当前用户ID (必填，用于验证是否为项目创建者)
+    """
+    user_id = request.args.get('user_id')
+    
+    if not user_id:
+        return jsonify({'error': '缺少必填参数: user_id'}), 400
+    
+    try:
+        applications = ProjectApplicationService.get_project_applications(project_id, user_id)
+        return jsonify({'data': applications, 'total': len(applications)}), 200
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': f'获取项目申请列表失败: {str(e)}'}), 500 

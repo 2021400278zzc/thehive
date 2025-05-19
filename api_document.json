@@ -22,9 +22,284 @@
     {
       "name": "项目",
       "description": "项目相关接口"
+    },
+    {
+      "name": "用户",
+      "description": "用户相关接口"
+    },
+    {
+      "name": "项目申请",
+      "description": "项目申请相关接口"
     }
   ],
   "paths": {
+    "/api/users": {
+      "post": {
+        "tags": ["用户"],
+        "summary": "创建用户",
+        "description": "创建新用户，邮箱是必填项",
+        "operationId": "createUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "用户邮箱",
+                    "format": "email"
+                  },
+                  "full_name": {
+                    "type": "string",
+                    "description": "用户全名"
+                  },
+                  "gender": {
+                    "type": "string",
+                    "description": "性别"
+                  },
+                  "mbti": {
+                    "type": "string",
+                    "description": "MBTI性格类型"
+                  },
+                  "star_sign": {
+                    "type": "string",
+                    "description": "星座"
+                  },
+                  "skills": {
+                    "type": "string",
+                    "description": "技能"
+                  },
+                  "interests": {
+                    "type": "string",
+                    "description": "兴趣"
+                  },
+                  "year_of_study": {
+                    "type": "string",
+                    "description": "学习年限"
+                  },
+                  "major": {
+                    "type": "string",
+                    "description": "专业"
+                  },
+                  "key_factors": {
+                    "oneOf": [
+                      {
+                        "type": "string",
+                        "description": "关键因素（字符串形式）"
+                      },
+                      {
+                        "type": "object",
+                        "description": "关键因素（对象形式）",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      }
+                    ]
+                  },
+                  "lightning_answers": {
+                    "type": "object",
+                    "description": "快速回答",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "用户创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "用户创建成功"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数有误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["用户"],
+        "summary": "获取用户列表",
+        "description": "获取用户列表，支持多种过滤条件",
+        "operationId": "getUsers",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "description": "邮箱",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "full_name",
+            "in": "query",
+            "description": "全名",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "gender",
+            "in": "query",
+            "description": "性别",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mbti",
+            "in": "query",
+            "description": "MBTI性格类型",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "star_sign",
+            "in": "query",
+            "description": "星座",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "major",
+            "in": "query",
+            "description": "专业",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取用户列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "description": "用户总数"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{user_id}": {
+      "get": {
+        "tags": ["用户"],
+        "summary": "获取用户详情",
+        "description": "根据用户ID获取用户详细信息",
+        "operationId": "getUserDetail",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "description": "用户ID",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取用户详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "用户不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/skill-types": {
       "get": {
         "tags": ["技能类型"],
@@ -169,6 +444,10 @@
                   "goal": {
                     "type": "string",
                     "description": "项目目标"
+                  },
+                  "creator_id": {
+                    "type": "integer",
+                    "description": "创建者ID"
                   },
                   "skill_requirements": {
                     "type": "array",
@@ -393,10 +672,387 @@
           }
         }
       }
+    },
+    "/api/project-applications": {
+      "post": {
+        "tags": ["项目申请"],
+        "summary": "申请加入项目",
+        "description": "用户申请加入某个项目",
+        "operationId": "applyForProject",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["project_id", "skill_type_id", "user_id"],
+                "properties": {
+                  "project_id": {
+                    "type": "integer",
+                    "description": "项目ID"
+                  },
+                  "skill_type_id": {
+                    "type": "integer",
+                    "description": "申请的技能类型ID"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "申请消息"
+                  },
+                  "user_id": {
+                    "type": "string",
+                    "description": "申请者的Auth0用户标识"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "申请提交成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "申请提交成功"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ProjectApplication"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数有误或申请失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/project-applications/{application_id}": {
+      "put": {
+        "tags": ["项目申请"],
+        "summary": "处理项目申请",
+        "description": "项目负责人处理加入申请",
+        "operationId": "processApplication",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "description": "申请ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status", "user_id"],
+                "properties": {
+                  "status": {
+                    "type": "integer",
+                    "description": "处理状态：2-接受，3-拒绝",
+                    "enum": [2, 3]
+                  },
+                  "response_message": {
+                    "type": "string",
+                    "description": "回复消息"
+                  },
+                  "user_id": {
+                    "type": "string",
+                    "description": "处理人的Auth0用户标识（必须是项目负责人）"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "申请处理成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "申请处理成功"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ProjectApplication"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数有误或处理失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/my-applications": {
+      "get": {
+        "tags": ["项目申请"],
+        "summary": "获取我的申请列表",
+        "description": "获取用户提交的所有项目申请",
+        "operationId": "getMyApplications",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "description": "用户的Auth0标识",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取申请列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ProjectApplication"
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "description": "申请总数"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数有误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{project_id}/applications": {
+      "get": {
+        "tags": ["项目申请"],
+        "summary": "获取项目申请列表",
+        "description": "获取项目收到的所有申请",
+        "operationId": "getProjectApplications",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "description": "项目ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "description": "当前用户的Auth0标识（必须是项目负责人）",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取项目申请列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ProjectApplication"
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "description": "申请总数"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数有误或无权限",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "用户ID"
+          },
+          "email": {
+            "type": "string",
+            "description": "用户邮箱",
+            "format": "email"
+          },
+          "full_name": {
+            "type": "string",
+            "description": "用户全名"
+          },
+          "gender": {
+            "type": "string",
+            "description": "性别"
+          },
+          "mbti": {
+            "type": "string",
+            "description": "MBTI性格类型"
+          },
+          "star_sign": {
+            "type": "string",
+            "description": "星座"
+          },
+          "skills": {
+            "type": "string",
+            "description": "技能"
+          },
+          "interests": {
+            "type": "string",
+            "description": "兴趣"
+          },
+          "year_of_study": {
+            "type": "string",
+            "description": "学习年限"
+          },
+          "major": {
+            "type": "string",
+            "description": "专业"
+          },
+          "key_factors": {
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "关键因素（字符串形式）"
+              },
+              {
+                "type": "object",
+                "description": "关键因素（对象形式）",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "lightning_answers": {
+            "type": "object",
+            "description": "快速回答",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "更新时间"
+          }
+        }
+      },
       "SkillType": {
         "type": "object",
         "properties": {
@@ -501,6 +1157,10 @@
             "type": "string",
             "description": "招募状态文本描述"
           },
+          "creator_id": {
+            "type": "integer",
+            "description": "创建者ID"
+          },
           "skill_requirements": {
             "type": "array",
             "description": "项目所需技能",
@@ -526,6 +1186,143 @@
           "error": {
             "type": "string",
             "description": "错误信息"
+          }
+        }
+      },
+      "ProjectApplication": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "申请ID"
+          },
+          "project_id": {
+            "type": "integer", 
+            "description": "项目ID"
+          },
+          "user_id": {
+            "type": "string",
+            "description": "申请者的Auth0用户标识"
+          },
+          "skill_type_id": {
+            "type": "integer",
+            "description": "申请的技能类型ID"
+          },
+          "skill_type_name": {
+            "type": "string",
+            "description": "申请的技能类型名称"
+          },
+          "message": {
+            "type": "string",
+            "description": "申请消息"
+          },
+          "status": {
+            "type": "integer",
+            "description": "申请状态：1-待处理、2-已接受、3-已拒绝"
+          },
+          "status_text": {
+            "type": "string",
+            "description": "申请状态文本"
+          },
+          "response_message": {
+            "type": "string",
+            "description": "回复消息"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "申请创建时间"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "申请更新时间"
+          },
+          "applicant_info": {
+            "type": "object",
+            "description": "申请者详细信息",
+            "properties": {
+              "user_id": {
+                "type": "string",
+                "description": "用户ID"
+              },
+              "full_name": {
+                "type": "string",
+                "description": "全名"
+              },
+              "picture": {
+                "type": "string",
+                "description": "头像URL"
+              },
+              "major": {
+                "type": "string",
+                "description": "专业"
+              },
+              "year_of_study": {
+                "type": "string",
+                "description": "学习年限"
+              },
+              "gender": {
+                "type": "string",
+                "description": "性别"
+              },
+              "mbti": {
+                "type": "string",
+                "description": "MBTI性格类型"
+              },
+              "star_sign": {
+                "type": "string",
+                "description": "星座"
+              },
+              "skills": {
+                "type": "string",
+                "description": "技能"
+              },
+              "interests": {
+                "type": "string",
+                "description": "兴趣"
+              }
+            }
+          },
+          "project_info": {
+            "type": "object",
+            "description": "项目信息",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "description": "项目ID"
+              },
+              "name": {
+                "type": "string",
+                "description": "项目名称"
+              },
+              "project_type": {
+                "type": "string",
+                "description": "项目类型"
+              },
+              "user_id": {
+                "type": "string",
+                "description": "创建者ID"
+              },
+              "creator_info": {
+                "type": "object",
+                "description": "项目负责人信息",
+                "properties": {
+                  "user_id": {
+                    "type": "string",
+                    "description": "用户ID"
+                  },
+                  "full_name": {
+                    "type": "string",
+                    "description": "全名"
+                  },
+                  "picture": {
+                    "type": "string",
+                    "description": "头像URL"
+                  }
+                }
+              }
+            }
           }
         }
       }
