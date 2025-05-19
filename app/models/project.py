@@ -44,11 +44,27 @@ class Project(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.now)
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     
+    # 创建者Auth0标识，现在添加外键约束
+    user_id = db.Column(db.String(100), db.ForeignKey('users.user_id'), nullable=False, comment='创建者Auth0用户标识')
+    
     # 建立与SkillRequirement的一对多关系
     skill_requirements = db.relationship('SkillRequirement', backref='project', lazy=True, cascade='all, delete-orphan')
     
+    # 建立与ProjectApplication的一对多关系
+    applications = db.relationship('ProjectApplication', backref='project', lazy=True, cascade='all, delete-orphan')
+    
     def to_dict(self):
         """转换为字典"""
+        creator_info = None
+        if self.creator:
+            creator_info = {
+                'user_id': self.creator.user_id,
+                'picture': self.creator.picture,
+                'full_name': self.creator.full_name,
+                'major': self.creator.major,
+                'year_of_study': self.creator.year_of_study
+            }
+            
         return {
             'id': self.id,
             'name': self.name,
@@ -60,6 +76,8 @@ class Project(db.Model):
             'status_text': '进行中' if self.status == self.STATUS_IN_PROGRESS else '已完成',
             'recruitment_status': self.recruitment_status,
             'recruitment_status_text': '开放申请' if self.recruitment_status == self.RECRUITMENT_OPEN else '招募结束',
+            'user_id': self.user_id,
+            'creator_info': creator_info,
             'skill_requirements': [skill.to_dict() for skill in self.skill_requirements],
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
             'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S')
@@ -92,4 +110,72 @@ class SkillRequirement(db.Model):
             'required_count': self.required_count,
             'importance': self.importance,
             'description': self.description
+        }
+
+
+class ProjectApplication(db.Model):
+    """项目申请模型"""
+    __tablename__ = 'project_applications'
+    
+    # 申请状态常量
+    STATUS_PENDING = 1    # 待处理
+    STATUS_APPROVED = 2   # 已接受
+    STATUS_REJECTED = 3   # 已拒绝
+    
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=False, comment='项目ID')
+    user_id = db.Column(db.String(100), db.ForeignKey('users.user_id'), nullable=False, comment='申请者ID')
+    skill_type_id = db.Column(db.Integer, db.ForeignKey('skill_types.id'), nullable=False, comment='申请的技能类型')
+    message = db.Column(db.Text, nullable=True, comment='申请消息')
+    status = db.Column(db.Integer, default=STATUS_PENDING, comment='申请状态：1-待处理、2-已接受、3-已拒绝')
+    response_message = db.Column(db.Text, nullable=True, comment='回复消息')
+    created_at = db.Column(db.DateTime, default=datetime.now, comment='申请时间')
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now, comment='更新时间')
+    
+    # 关联关系
+    applicant = db.relationship('User', backref='applications', foreign_keys=[user_id])
+    skill_type = db.relationship('SkillType')
+    
+    def to_dict(self):
+        """转换为字典"""
+        status_text = {
+            self.STATUS_PENDING: '待处理',
+            self.STATUS_APPROVED: '已接受',
+            self.STATUS_REJECTED: '已拒绝'
+        }.get(self.status, '未知状态')
+        
+            
+        # 项目信息包含项目负责人信息
+        project_info = None
+        creator_info = None
+        if self.project:
+            
+            if self.project.creator:
+                creator_info = {
+                    'user_id': self.project.creator.user_id,
+                    'full_name': self.project.creator.full_name,
+                    'picture': self.project.creator.picture
+                }
+                
+            project_info = {
+                'id': self.project.id,
+                'name': self.project.name,
+                'project_type': self.project.project_type,
+                'user_id': self.project.user_id,
+            }
+            
+        return {
+            'id': self.id,
+            'project_id': self.project_id,
+            'user_id': self.user_id,
+            'skill_type_id': self.skill_type_id,
+            'skill_type_name': self.skill_type.name if self.skill_type else None,
+            'message': self.message,
+            'status': self.status,
+            'status_text': status_text,
+            'response_message': self.response_message,
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'project_info': project_info,
+            'creator_info': creator_info
         } 

@@ -1,5 +1,5 @@
 from app import db
-from app.models.project import Project, SkillRequirement, SkillType
+from app.models.project import Project, SkillRequirement, SkillType, ProjectApplication
 from datetime import datetime
 from sqlalchemy import or_, and_
 
@@ -39,12 +39,16 @@ class SkillTypeService:
 
 class ProjectService:
     @staticmethod
-    def create_project(data):
+    def create_project(data, user_id):
         """
         创建新项目
         :param data: 包含项目信息的字典
+        :param user_id: 创建者用户ID（必填）
         :return: 创建的项目对象
         """
+        if not user_id:
+            raise ValueError("创建项目必须提供用户ID")
+            
         # 创建项目
         project = Project(
             name=data['name'],
@@ -53,7 +57,8 @@ class ProjectService:
             description=data.get('description'),
             goal=data.get('goal'),
             status=Project.STATUS_IN_PROGRESS,
-            recruitment_status=Project.RECRUITMENT_OPEN
+            recruitment_status=Project.RECRUITMENT_OPEN,
+            user_id=user_id
         )
         
         # 添加技能需求
@@ -127,4 +132,113 @@ class ProjectService:
         :return: 项目详情
         """
         project = Project.query.get_or_404(project_id)
-        return project.to_dict() 
+        return project.to_dict()
+
+
+class ProjectApplicationService:
+    @staticmethod
+    def apply_for_project(data, user_id):
+        """
+        申请加入项目
+        :param data: 包含申请信息的字典
+        :param user_id: 申请者用户ID
+        :return: 创建的申请对象
+        """
+        # 验证项目是否存在
+        project = Project.query.get_or_404(data['project_id'])
+        
+        # 验证是否已经申请过
+        existing_application = ProjectApplication.query.filter_by(
+            project_id=data['project_id'],
+            user_id=user_id,
+            skill_type_id=data['skill_type_id'],
+            status=ProjectApplication.STATUS_PENDING
+        ).first()
+        
+        if existing_application:
+            raise ValueError("您已经申请过该项目的这个技能岗位，请等待项目负责人处理")
+        
+        # 验证是否是项目创建者
+        if project.user_id == user_id:
+            raise ValueError("您不能申请加入自己创建的项目")
+        
+        # 验证项目是否开放申请
+        if project.recruitment_status != Project.RECRUITMENT_OPEN:
+            raise ValueError("该项目当前不接受申请")
+        
+        # 创建申请
+        application = ProjectApplication(
+            project_id=data['project_id'],
+            user_id=user_id,
+            skill_type_id=data['skill_type_id'],
+            message=data.get('message')
+        )
+        
+        db.session.add(application)
+        db.session.commit()
+        
+        return application
+    
+    @staticmethod
+    def process_application(application_id, status, response_message=None, user_id=None):
+        """
+        处理项目申请
+        :param application_id: 申请ID
+        :param status: 处理状态 (2-接受, 3-拒绝)
+        :param response_message: 回复消息
+        :param user_id: 处理人ID (必须是项目创建者)
+        :return: 处理结果
+        """
+        # 验证申请是否存在
+        application = ProjectApplication.query.get_or_404(application_id)
+        
+        # 验证状态
+        if application.status != ProjectApplication.STATUS_PENDING:
+            raise ValueError("该申请已处理，不能重复处理")
+        
+        # 验证处理人权限
+        project = Project.query.get(application.project_id)
+        if user_id and project.user_id != user_id:
+            raise ValueError("您不是项目负责人，无权处理该申请")
+        
+        # 更新申请状态
+        application.status = status
+        application.response_message = response_message
+        
+        db.session.commit()
+        
+        return application
+    
+    @staticmethod
+    def get_my_applications(user_id):
+        """
+        获取用户提交的申请列表
+        :param user_id: 用户ID
+        :return: 申请列表
+        """
+        applications = ProjectApplication.query.filter_by(user_id=user_id).order_by(
+            ProjectApplication.created_at.desc()
+        ).all()
+        
+        return [application.to_dict() for application in applications]
+    
+    @staticmethod
+    def get_project_applications(project_id, user_id=None):
+        """
+        获取项目收到的申请列表
+        :param project_id: 项目ID
+        :param user_id: 当前用户ID (用于验证是否为项目创建者)
+        :return: 申请列表
+        """
+        # 验证项目是否存在
+        project = Project.query.get_or_404(project_id)
+        
+        # 验证查询者权限
+        if user_id and project.user_id != user_id:
+            raise ValueError("您不是项目负责人，无权查看申请列表")
+        
+        applications = ProjectApplication.query.filter_by(project_id=project_id).order_by(
+            ProjectApplication.created_at.desc()
+        ).all()
+        
+        return [application.to_dict() for application in applications] 
