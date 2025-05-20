@@ -1,5 +1,5 @@
 from app import db
-from app.models.project import ProjectApplication
+from app.models.project import ProjectApplication, Project, SkillType
 from app.models.user import User
 from sqlalchemy import or_
 
@@ -119,16 +119,18 @@ class UserService:
         """
         获取参与者用户列表，支持过滤条件
         :param filters: 过滤条件字典
-        :return: 用户列表
+        :return: 用户列表（包含项目名称和项目技能）
         """
         query = User.query
+        project_id = None
         
         if filters:
             # 项目ID筛选
             if 'project_id' in filters and filters['project_id']:
+                project_id = filters['project_id']
                 # 通过子查询获取项目参与者
                 project_participants = db.session.query(ProjectApplication.user_id).filter(
-                    ProjectApplication.project_id == filters['project_id'],
+                    ProjectApplication.project_id == project_id,
                     ProjectApplication.status == ProjectApplication.STATUS_APPROVED
                 ).distinct().subquery()
                 
@@ -162,6 +164,44 @@ class UserService:
             if 'user_id' in filters and filters['user_id']:
                 query = query.filter(User.user_id == filters['user_id'])
         
-        # 返回用户列表
+        # 获取用户列表
         users = query.all()
-        return [user.to_dict() for user in users] 
+        result = []
+        
+        for user in users:
+            user_data = user.to_dict()
+            
+            # 如果指定了项目ID，查询该用户在项目中的技能和项目名称
+            if project_id:
+                # 查询用户在该项目的申请
+                application = ProjectApplication.query.filter_by(
+                    project_id=project_id,
+                    user_id=user.user_id,
+                    status=ProjectApplication.STATUS_APPROVED
+                ).first()
+                
+                if application:
+                    # 获取项目名称
+                    project = Project.query.get(project_id)
+                    if project:
+                        user_data['project_name'] = project.name
+                    else:
+                        user_data['project_name'] = '未知项目'
+                    
+                    # 获取技能类型名称
+                    skill_type = SkillType.query.get(application.skill_type_id)
+                    if skill_type:
+                        user_data['project_skill'] = skill_type.name
+                    else:
+                        user_data['project_skill'] = '未知技能'
+                else:
+                    user_data['project_name'] = '未知项目'
+                    user_data['project_skill'] = '未知技能'
+            else:
+                # 如果没有指定项目ID，这些字段设为空
+                user_data['project_name'] = ''
+                user_data['project_skill'] = ''
+                
+            result.append(user_data)
+        
+        return result 

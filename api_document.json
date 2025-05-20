@@ -105,6 +105,14 @@
                     "additionalProperties": {
                       "type": "string"
                     }
+                  },
+                  "picture": {
+                    "type": "string",
+                    "description": "用户头像URL"
+                  },
+                  "user_id": {
+                    "type": "string",
+                    "description": "Auth0用户标识"
                   }
                 }
               }
@@ -112,7 +120,7 @@
           }
         },
         "responses": {
-          "201": {
+          "200": {
             "description": "用户创建成功",
             "content": {
               "application/json": {
@@ -206,6 +214,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "description": "Auth0用户标识",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -249,15 +265,61 @@
         "tags": ["用户"],
         "summary": "获取用户详情",
         "description": "根据用户ID获取用户详细信息",
-        "operationId": "getUserDetail",
+        "operationId": "getUserById",
         "parameters": [
           {
             "name": "user_id",
             "in": "path",
-            "required": true,
             "description": "用户ID",
+            "required": true,
             "schema": {
               "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取用户详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/by-auth-id/{auth_id}": {
+      "get": {
+        "tags": ["用户"],
+        "summary": "通过Auth0标识获取用户",
+        "description": "根据Auth0用户标识获取用户信息",
+        "operationId": "getUserByAuthId",
+        "parameters": [
+          {
+            "name": "auth_id",
+            "in": "path",
+            "description": "Auth0用户标识",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -283,6 +345,131 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/participant": {
+      "get": {
+        "tags": ["用户"],
+        "summary": "获取参与者用户列表",
+        "description": "获取参与特定项目的用户列表，支持多种过滤条件",
+        "operationId": "getParticipantUsers",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "description": "项目ID",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "description": "邮箱",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "full_name",
+            "in": "query",
+            "description": "全名",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "gender",
+            "in": "query",
+            "description": "性别",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mbti",
+            "in": "query",
+            "description": "MBTI性格类型",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "star_sign",
+            "in": "query",
+            "description": "星座",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "major",
+            "in": "query",
+            "description": "专业",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "description": "Auth0用户标识",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取用户列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "allOf": [
+                          {
+                            "$ref": "#/components/schemas/User"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "project_name": {
+                                "type": "string",
+                                "description": "项目名称"
+                              },
+                              "project_skill": {
+                                "type": "string",
+                                "description": "项目技能"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "description": "用户总数"
+                    }
+                  }
                 }
               }
             }
@@ -414,7 +601,7 @@
       "post": {
         "tags": ["项目"],
         "summary": "创建项目",
-        "description": "创建新项目，包括项目基本信息和技能需求",
+        "description": "创建新的项目",
         "operationId": "createProject",
         "requestBody": {
           "required": true,
@@ -422,7 +609,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["name", "project_type", "end_time"],
+                "required": ["name", "project_type", "end_time", "user_id"],
                 "properties": {
                   "name": {
                     "type": "string",
@@ -435,7 +622,7 @@
                   "end_time": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "项目结束时间，格式：YYYY-MM-DD HH:MM:SS"
+                    "description": "项目结束时间"
                   },
                   "description": {
                     "type": "string",
@@ -445,13 +632,12 @@
                     "type": "string",
                     "description": "项目目标"
                   },
-                  "creator_id": {
-                    "type": "integer",
-                    "description": "创建者ID"
+                  "user_id": {
+                    "type": "string",
+                    "description": "创建者Auth0用户标识"
                   },
                   "skill_requirements": {
                     "type": "array",
-                    "description": "项目所需技能",
                     "items": {
                       "type": "object",
                       "required": ["skill_type_id", "required_count", "importance"],
@@ -462,17 +648,17 @@
                         },
                         "required_count": {
                           "type": "integer",
-                          "description": "所需人数"
+                          "description": "需要的人数"
                         },
                         "importance": {
                           "type": "integer",
-                          "description": "重要程度(1-5星)",
                           "minimum": 1,
-                          "maximum": 5
+                          "maximum": 5,
+                          "description": "重要程度(1-5)"
                         },
                         "description": {
                           "type": "string",
-                          "description": "技能需求描述"
+                          "description": "技能描述"
                         }
                       }
                     }
@@ -483,7 +669,7 @@
           }
         },
         "responses": {
-          "201": {
+          "200": {
             "description": "项目创建成功",
             "content": {
               "application/json": {
@@ -549,7 +735,7 @@
           {
             "name": "status",
             "in": "query",
-            "description": "项目状态(1-进行中、2-已完成)",
+            "description": "项目状态 (1-进行中、2-已完成)",
             "schema": {
               "type": "integer",
               "enum": [1, 2]
@@ -558,7 +744,7 @@
           {
             "name": "recruitment_status",
             "in": "query",
-            "description": "招募状态(1-开放申请、2-招募结束)",
+            "description": "招募状态 (1-开放申请、2-招募结束)",
             "schema": {
               "type": "integer",
               "enum": [1, 2]
@@ -617,41 +803,98 @@
         }
       }
     },
-    "/api/projects/{project_id}": {
+    "/api/projects/founder": {
       "get": {
         "tags": ["项目"],
-        "summary": "获取项目详情",
-        "description": "根据项目ID获取项目详细信息",
-        "operationId": "getProjectDetail",
+        "summary": "获取我创建的项目列表",
+        "description": "获取当前用户创建的项目列表，支持多种过滤条件",
+        "operationId": "getFounderProjects",
         "parameters": [
           {
-            "name": "project_id",
-            "in": "path",
+            "name": "user_id",
+            "in": "query",
+            "description": "用户ID（Auth0用户标识）",
             "required": true,
-            "description": "项目ID",
             "schema": {
-              "type": "integer"
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "description": "项目名称",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "project_types",
+            "in": "query",
+            "description": "项目类别，多个用逗号分隔",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "项目状态 (1-进行中、2-已完成)",
+            "schema": {
+              "type": "integer",
+              "enum": [1, 2]
+            }
+          },
+          {
+            "name": "recruitment_status",
+            "in": "query",
+            "description": "招募状态 (1-开放申请、2-招募结束)",
+            "schema": {
+              "type": "integer",
+              "enum": [1, 2]
+            }
+          },
+          {
+            "name": "skill_type_ids",
+            "in": "query",
+            "description": "所需技能类型ID，多个用逗号分隔",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "关键词搜索（搜索项目描述和目标）",
+            "schema": {
+              "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "成功获取项目详情",
+            "description": "成功获取项目列表",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "data": {
-                      "$ref": "#/components/schemas/Project"
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Project"
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "description": "项目总数"
                     }
                   }
                 }
               }
             }
           },
-          "404": {
-            "description": "项目不存在",
+          "400": {
+            "description": "请求参数有误",
             "content": {
               "application/json": {
                 "schema": {
@@ -673,11 +916,170 @@
         }
       }
     },
+    "/api/projects/participant": {
+      "get": {
+        "tags": ["项目"],
+        "summary": "获取我参与的项目列表",
+        "description": "获取当前用户参与的项目列表，支持多种过滤条件",
+        "operationId": "getParticipantProjects",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "description": "用户ID（Auth0用户标识）",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "description": "项目名称",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "project_types",
+            "in": "query",
+            "description": "项目类别，多个用逗号分隔",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "项目状态 (1-进行中、2-已完成)",
+            "schema": {
+              "type": "integer",
+              "enum": [1, 2]
+            }
+          },
+          {
+            "name": "recruitment_status",
+            "in": "query",
+            "description": "招募状态 (1-开放申请、2-招募结束)",
+            "schema": {
+              "type": "integer",
+              "enum": [1, 2]
+            }
+          },
+          {
+            "name": "skill_type_ids",
+            "in": "query",
+            "description": "所需技能类型ID，多个用逗号分隔",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "关键词搜索（搜索项目描述和目标）",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取项目列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Project"
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "description": "项目总数"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数有误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{project_id}": {
+      "get": {
+        "tags": ["项目"],
+        "summary": "获取项目详情",
+        "description": "根据项目ID获取项目详细信息",
+        "operationId": "getProjectById",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "description": "项目ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取项目详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Project"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/project-applications": {
       "post": {
         "tags": ["项目申请"],
         "summary": "申请加入项目",
-        "description": "用户申请加入某个项目",
+        "description": "提交申请加入特定项目的特定技能岗位",
         "operationId": "applyForProject",
         "requestBody": {
           "required": true,
@@ -693,15 +1095,15 @@
                   },
                   "skill_type_id": {
                     "type": "integer",
-                    "description": "申请的技能类型ID"
+                    "description": "技能类型ID"
+                  },
+                  "user_id": {
+                    "type": "string",
+                    "description": "申请者Auth0用户标识"
                   },
                   "message": {
                     "type": "string",
                     "description": "申请消息"
-                  },
-                  "user_id": {
-                    "type": "string",
-                    "description": "申请者的Auth0用户标识"
                   }
                 }
               }
@@ -729,7 +1131,7 @@
             }
           },
           "400": {
-            "description": "请求参数有误或申请失败",
+            "description": "请求参数有误",
             "content": {
               "application/json": {
                 "schema": {
@@ -755,7 +1157,7 @@
       "put": {
         "tags": ["项目申请"],
         "summary": "处理项目申请",
-        "description": "项目负责人处理加入申请",
+        "description": "项目创建者处理申请（接受或拒绝）",
         "operationId": "processApplication",
         "parameters": [
           {
@@ -778,7 +1180,7 @@
                 "properties": {
                   "status": {
                     "type": "integer",
-                    "description": "处理状态：2-接受，3-拒绝",
+                    "description": "状态码(2-接受, 3-拒绝)",
                     "enum": [2, 3]
                   },
                   "response_message": {
@@ -787,7 +1189,7 @@
                   },
                   "user_id": {
                     "type": "string",
-                    "description": "处理人的Auth0用户标识（必须是项目负责人）"
+                    "description": "处理人ID（必须是项目负责人）"
                   }
                 }
               }
@@ -815,7 +1217,7 @@
             }
           },
           "400": {
-            "description": "请求参数有误或处理失败",
+            "description": "请求参数有误",
             "content": {
               "application/json": {
                 "schema": {
@@ -840,14 +1242,14 @@
     "/api/my-applications": {
       "get": {
         "tags": ["项目申请"],
-        "summary": "获取我的申请列表",
-        "description": "获取用户提交的所有项目申请",
+        "summary": "获取我提交的申请列表",
+        "description": "获取当前用户提交的所有项目申请",
         "operationId": "getMyApplications",
         "parameters": [
           {
             "name": "user_id",
             "in": "query",
-            "description": "用户的Auth0标识",
+            "description": "用户ID",
             "required": true,
             "schema": {
               "type": "string"
@@ -903,8 +1305,8 @@
     "/api/projects/{project_id}/applications": {
       "get": {
         "tags": ["项目申请"],
-        "summary": "获取项目申请列表",
-        "description": "获取项目收到的所有申请",
+        "summary": "获取项目收到的申请列表",
+        "description": "获取特定项目收到的所有申请",
         "operationId": "getProjectApplications",
         "parameters": [
           {
@@ -914,15 +1316,6 @@
             "required": true,
             "schema": {
               "type": "integer"
-            }
-          },
-          {
-            "name": "user_id",
-            "in": "query",
-            "description": "当前用户的Auth0标识（必须是项目负责人）",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -950,7 +1343,96 @@
             }
           },
           "400": {
-            "description": "请求参数有误或无权限",
+            "description": "请求参数有误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/participants": {
+      "delete": {
+        "tags": ["项目"],
+        "summary": "移除项目参与者",
+        "description": "从项目中移除特定参与者",
+        "operationId": "removeProjectParticipant",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "description": "项目ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "participant_user_id",
+            "in": "query",
+            "description": "要移除的参与者ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "creator_id",
+            "in": "query",
+            "description": "操作者ID (必须是项目创建者)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功移除项目参与者",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "成功移除项目参与者"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数有误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权操作",
             "content": {
               "application/json": {
                 "schema": {
@@ -1005,11 +1487,11 @@
           },
           "skills": {
             "type": "string",
-            "description": "技能"
+            "description": "用户技能"
           },
           "interests": {
             "type": "string",
-            "description": "兴趣"
+            "description": "兴趣爱好"
           },
           "year_of_study": {
             "type": "string",
@@ -1020,19 +1502,11 @@
             "description": "专业"
           },
           "key_factors": {
-            "oneOf": [
-              {
-                "type": "string",
-                "description": "关键因素（字符串形式）"
-              },
-              {
-                "type": "object",
-                "description": "关键因素（对象形式）",
-                "additionalProperties": {
-                  "type": "string"
-                }
-              }
-            ]
+            "type": "object",
+            "description": "关键因素",
+            "additionalProperties": {
+              "type": "string"
+            }
           },
           "lightning_answers": {
             "type": "object",
@@ -1040,6 +1514,14 @@
             "additionalProperties": {
               "type": "string"
             }
+          },
+          "picture": {
+            "type": "string",
+            "description": "用户头像URL"
+          },
+          "user_id": {
+            "type": "string",
+            "description": "Auth0用户标识"
           },
           "created_at": {
             "type": "string",
@@ -1101,7 +1583,11 @@
           },
           "required_count": {
             "type": "integer",
-            "description": "所需人数"
+            "description": "需要的人数"
+          },
+          "current_count": {
+            "type": "integer",
+            "description": "当前已有人数"
           },
           "importance": {
             "type": "integer",
@@ -1109,7 +1595,17 @@
           },
           "description": {
             "type": "string",
-            "description": "技能需求描述"
+            "description": "技能描述"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "更新时间"
           }
         }
       },
