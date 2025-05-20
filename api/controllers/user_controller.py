@@ -1,9 +1,10 @@
 from flask import Blueprint, request, jsonify
 from api.services.user_service import UserService
 
-user_bp = Blueprint('user', __name__)
+user_bp = Blueprint("user", __name__)
 
-@user_bp.route('/users', methods=['POST'])
+
+@user_bp.route("/users", methods=["POST"])
 def create_user():
     """
     创建用户API
@@ -25,55 +26,58 @@ def create_user():
     }
     """
     data = request.get_json()
-    
+
     # 参数验证
-    if 'email' not in data or not data['email']:
-        return jsonify({'error': '邮箱是必填字段'}), 400
-    
+    if "email" not in data or not data["email"]:
+        return jsonify({"error": "邮箱是必填字段"}), 400
+
     try:
         # 创建用户
         user = UserService.create_user(data)
-        return jsonify({'message': '用户创建成功', 'data': user.to_dict()}), 200
+        return jsonify({"message": "用户创建成功", "data": user.to_dict()}), 200
     except ValueError as e:
-        return jsonify({'error': str(e)}), 200
+        return jsonify({"error": str(e)}), 200
     except Exception as e:
-        return jsonify({'error': f'创建用户失败: {str(e)}'}), 500
+        return jsonify({"error": f"创建用户失败: {str(e)}"}), 500
 
-@user_bp.route('/users/<int:user_id>', methods=['GET'])
+
+@user_bp.route("/users/<int:user_id>", methods=["GET"])
 def get_user(user_id):
     """
     获取用户详情API
-    
+
     路径参数:
     - user_id: 用户ID
     """
     try:
         user = UserService.get_user_by_id(user_id)
-        return jsonify({'data': user.to_dict()}), 200
+        return jsonify({"data": user.to_dict()}), 200
     except Exception as e:
-        return jsonify({'error': f'获取用户详情失败: {str(e)}'}), 500
+        return jsonify({"error": f"获取用户详情失败: {str(e)}"}), 500
 
-@user_bp.route('/users/by-auth-id/<auth_id>', methods=['GET'])
+
+@user_bp.route("/users/by-auth-id/<auth_id>", methods=["GET"])
 def get_user_by_auth_id(auth_id):
     """
     根据Auth0标识获取用户API
-    
+
     路径参数:
     - auth_id: Auth0用户标识
     """
     try:
         user = UserService.get_user_by_auth_id(auth_id)
         if not user:
-            return jsonify({'error': '用户不存在'}), 404
-        return jsonify({'data': user.to_dict()}), 200
+            return jsonify({"error": "用户不存在"}), 404
+        return jsonify({"data": user.to_dict()}), 200
     except Exception as e:
-        return jsonify({'error': f'获取用户详情失败: {str(e)}'}), 500
+        return jsonify({"error": f"获取用户详情失败: {str(e)}"}), 500
 
-@user_bp.route('/users', methods=['GET'])
+
+@user_bp.route("/users", methods=["GET"])
 def get_user_list():
     """
     获取用户列表API
-    
+
     查询参数:
     - email: 邮箱
     - full_name: 全名
@@ -84,31 +88,78 @@ def get_user_list():
     - user_id: Auth0用户标识
     """
     filters = {}
-    
+
     # 获取并处理查询参数
-    if request.args.get('email'):
-        filters['email'] = request.args.get('email')
-    
-    if request.args.get('full_name'):
-        filters['full_name'] = request.args.get('full_name')
-    
-    if request.args.get('gender'):
-        filters['gender'] = request.args.get('gender')
-    
-    if request.args.get('mbti'):
-        filters['mbti'] = request.args.get('mbti')
-    
-    if request.args.get('star_sign'):
-        filters['star_sign'] = request.args.get('star_sign')
-    
-    if request.args.get('major'):
-        filters['major'] = request.args.get('major')
-    
-    if request.args.get('user_id'):
-        filters['user_id'] = request.args.get('user_id')
-    
+    if request.args.get("email"):
+        filters["email"] = request.args.get("email")
+
+    if request.args.get("full_name"):
+        filters["full_name"] = request.args.get("full_name")
+
+    if request.args.get("gender"):
+        filters["gender"] = request.args.get("gender")
+
+    if request.args.get("mbti"):
+        filters["mbti"] = request.args.get("mbti")
+
+    if request.args.get("star_sign"):
+        filters["star_sign"] = request.args.get("star_sign")
+
+    if request.args.get("major"):
+        filters["major"] = request.args.get("major")
+
+    if request.args.get("user_id"):
+        filters["user_id"] = request.args.get("user_id")
+
     try:
         users = UserService.get_user_list(filters)
-        return jsonify({'data': users, 'total': len(users)}), 200
+        return jsonify({"data": users, "total": len(users)}), 200
     except Exception as e:
-        return jsonify({'error': f'获取用户列表失败: {str(e)}'}), 500 
+        return jsonify({"error": f"获取用户列表失败: {str(e)}"}), 500
+
+
+@user_bp.route("/users/participant", methods=["GET"])
+def get_participant_user_list():
+    """
+    获取参与者用户列表API
+
+    查询参数:
+    - project_id: 项目ID
+    - email: 邮箱
+    - full_name: 全名
+    - gender: 性别
+    - mbti: MBTI性格类型
+    - star_sign: 星座
+    - major: 专业
+    - user_id: Auth0用户标识
+    """
+    filters = {}
+    if request.args.get("project_id"):
+        filters["project_id"] = request.args.get("project_id")
+    # 获取并处理查询参数
+    if request.args.get("email"):
+        filters["email"] = request.args.get("email")
+
+    if request.args.get("full_name"):
+        filters["full_name"] = request.args.get("full_name")
+
+    if request.args.get("gender"):
+        filters["gender"] = request.args.get("gender")
+
+    if request.args.get("mbti"):
+        filters["mbti"] = request.args.get("mbti")
+
+    if request.args.get("star_sign"):
+        filters["star_sign"] = request.args.get("star_sign")
+
+    if request.args.get("major"):
+        filters["major"] = request.args.get("major")
+
+    if request.args.get("user_id"):
+        filters["user_id"] = request.args.get("user_id")
+
+    try:
+        users = UserService.get_participant_user_list(filters)
+        return jsonify({"data": users, "total": len(users)}), 200
+    except Exception as e:
+        return jsonify({"error": f"获取用户列表失败: {str(e)}"}), 500
