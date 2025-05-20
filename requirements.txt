@@ -3,4 +3,4 @@ Flask-SQLAlchemy
 Flask-Migrate
 python-dotenv
 flask_cors
-psycopg2
+psycopg2-binary
