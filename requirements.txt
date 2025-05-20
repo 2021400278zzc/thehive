@@ -1,5 +1,7 @@
-Flask==2.2.3
-Flask-SQLAlchemy==3.0.3
-Flask-Migrate==4.0.4
-mysqlclient==2.1.1
-python-dotenv==1.0.0 
+Flask
+Flask-SQLAlchemy
+Flask-Migrate
+mysqlclient
+python-dotenv
+flask_cors
+psycopg2
