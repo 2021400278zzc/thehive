@@ -1,5 +1,6 @@
 from app import db
 from datetime import datetime
+from app.models.user import User
 
 class SkillType(db.Model):
     """技能类型模型"""
@@ -178,4 +179,4 @@ class ProjectApplication(db.Model):
             'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
             'project_info': project_info,
             'creator_info': creator_info
-        } 
+        }

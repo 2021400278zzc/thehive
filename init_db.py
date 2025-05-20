@@ -1,24 +1,6 @@
-import sys
-import os
-from flask import Flask
-from sqlalchemy import create_engine, text
 from app import db, create_app
 from app.models.project import SkillType, ProjectApplication
 from app.models.user import User
-
-# 创建neon数据库
-def create_database():
-    try:
-        # 连接MySQL服务器（不指定数据库）
-        engine = create_engine('mysql://root:123456@localhost')
-        
-        # 创建数据库
-        with engine.connect() as conn:
-            conn.execute(text("CREATE DATABASE IF NOT EXISTS neon DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"))
-            print("数据库'neon'创建成功或已存在")
-    except Exception as e:
-        print(f"创建数据库失败，错误: {str(e)}")
-        sys.exit(1)
 
 # 创建Flask应用
 app = create_app()
@@ -94,29 +76,15 @@ initial_users = [
         "user_id": "auth0|test123456789"
     }
 ]
-
-def init_db():
-    """初始化数据库"""
-    # 先创建数据库
-    create_database()
-    
-    with app.app_context():
-        # 创建所有表
-        db.create_all()
-        print("数据库表创建完成")
-        
-        # 添加初始数据
-        add_initial_data()
-        print("初始数据添加完成")
         
 def add_initial_data():
     """添加初始数据"""
-    with app.app_context():
-        # 添加技能类型
-        add_skill_types()
-        
-        # 添加用户
-        add_users()
+
+    # 添加技能类型
+    add_skill_types()
+    
+    # 添加用户
+    add_users()
 
 def add_skill_types():
     """添加技能类型数据"""
@@ -161,6 +129,6 @@ def add_users():
         db.session.commit()
         print(f"已添加 {len(initial_users)} 个用户")
 
-if __name__ == "__main__":
-    init_db()
-    print("数据库初始化完成") 
+if __name__ == '__main__':
+    add_initial_data()
+    print("初始数据添加完成")
