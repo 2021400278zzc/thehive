@@ -137,6 +137,107 @@ def get_project_list():
     except Exception as e:
         return jsonify({'error': f'获取项目列表失败: {str(e)}'}), 500
 
+@project_bp.route('/projects/founder', methods=['GET'])
+def get_founder_projects():
+    """
+    获取我创建的项目列表API
+    
+    请求体参数:
+    - user_id: 用户ID (必需)
+    
+    请求参数 (URL查询参数):
+    - name: 项目名称
+    - project_types: 项目类别，多个用逗号分隔
+    - status: 项目状态 (1-进行中、2-已完成)
+    - recruitment_status: 招募状态 (1-开放申请、2-招募结束)
+    - skill_type_ids: 所需技能ID，多个用逗号分隔
+    - keyword: 关键词搜索（搜索项目描述和目标）
+    """
+    # 从请求体获取 user_id
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({'error': '缺少必需的 user_id 参数'}), 400
+    
+    # 首先创建基础过滤条件，包含 user_id
+    filters = {
+        'user_id': user_id
+    }
+    
+    # 获取并处理其他查询参数
+    if request.args.get('name'):
+        filters['name'] = request.args.get('name')
+    
+    if request.args.get('project_types'):
+        filters['project_types'] = request.args.get('project_types').split(',')
+    
+    if request.args.get('status'):
+        filters['status'] = request.args.get('status')
+    
+    if request.args.get('recruitment_status'):
+        filters['recruitment_status'] = request.args.get('recruitment_status')
+    
+    if request.args.get('skill_type_ids'):
+        filters['skill_type_ids'] = request.args.get('skill_type_ids').split(',')
+    
+    if request.args.get('keyword'):
+        filters['keyword'] = request.args.get('keyword')
+    
+    try:
+        projects = ProjectService.get_founder_project_list(filters)
+        return jsonify({'data': projects, 'total': len(projects)}), 200
+    except Exception as e:
+        return jsonify({'error': f'获取项目列表失败: {str(e)}'}), 500
+
+@project_bp.route('/projects/participant', methods=['GET'])
+def get_participant_projects():
+    """
+    获取我参与的项目列表API
+    
+    请求体参数:
+    - user_id: 用户ID (必需)
+    
+    请求参数 (URL查询参数):
+    - name: 项目名称
+    - project_types: 项目类别，多个用逗号分隔
+    - status: 项目状态 (1-进行中、2-已完成)
+    - recruitment_status: 招募状态 (1-开放申请、2-招募结束)
+    - skill_type_ids: 所需技能ID，多个用逗号分隔
+    - keyword: 关键词搜索（搜索项目描述和目标）
+    """
+    # 从请求体获取 user_id
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({'error': '缺少必需的 user_id 参数'}), 400
+    
+    # 首先创建基础过滤条件，包含 user_id
+    filters = {
+        'user_id': user_id
+    }
+    
+    # 获取并处理其他查询参数
+    if request.args.get('name'):
+        filters['name'] = request.args.get('name')
+    
+    if request.args.get('project_types'):
+        filters['project_types'] = request.args.get('project_types').split(',')
+    
+    if request.args.get('status'):
+        filters['status'] = request.args.get('status')
+    
+    if request.args.get('recruitment_status'):
+        filters['recruitment_status'] = request.args.get('recruitment_status')
+    
+    if request.args.get('skill_type_ids'):
+        filters['skill_type_ids'] = request.args.get('skill_type_ids').split(',')
+    
+    if request.args.get('keyword'):
+        filters['keyword'] = request.args.get('keyword')
+    
+    try:
+        projects = ProjectService.get_participant_project_list(filters)
+        return jsonify({'data': projects, 'total': len(projects)}), 200
+    except Exception as e:
+        return jsonify({'error': f'获取项目列表失败: {str(e)}'}), 500
 
 @project_bp.route('/projects/<int:project_id>', methods=['GET'])
 def get_project_detail(project_id):
@@ -247,17 +348,38 @@ def get_project_applications(project_id):
     获取项目收到的申请列表API
     
     请求参数 (URL查询参数):
-    - user_id: 当前用户ID (必填，用于验证是否为项目创建者)
+    - user_id: 当前用户ID (可选，不再用于权限验证)
     """
-    user_id = request.args.get('user_id')
-    
-    if not user_id:
-        return jsonify({'error': '缺少必填参数: user_id'}), 400
-    
     try:
-        applications = ProjectApplicationService.get_project_applications(project_id, user_id)
+        applications = ProjectApplicationService.get_project_applications(project_id)
         return jsonify({'data': applications, 'total': len(applications)}), 200
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
     except Exception as e:
-        return jsonify({'error': f'获取项目申请列表失败: {str(e)}'}), 500 
+        return jsonify({'error': f'获取项目申请列表失败: {str(e)}'}), 500
+
+@project_bp.route('/projects/participants', methods=['DELETE'])
+def remove_project_participant():
+    """
+    移除项目参与者API
+    
+    路径参数:
+    - project_id: 项目ID
+    - participant_user_id: 要移除的参与者ID
+    
+    请求参数 (URL查询参数):
+    - creator_id: 操作者ID (必须是项目创建者)
+    """
+    creator_id = request.args.get('creator_id')
+    participant_user_id = request.args.get('participant_user_id')
+    project_id = request.args.get('project_id')
+    if not creator_id:
+        return jsonify({'error': '缺少必填参数: creator_id'}), 400
+    
+    try:
+        result = ProjectApplicationService.remove_project_participant(project_id, participant_user_id, creator_id)
+        return jsonify(result), 200
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 403
+    except Exception as e:
+        return jsonify({'error': f'移除项目参与者失败: {str(e)}'}), 500 

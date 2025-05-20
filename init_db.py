@@ -26,48 +26,48 @@ app = create_app()
 # 初始技能类型数据
 initial_skill_types = [
     {
-        "name": "软件开发",
-        "description": "开发各类软件应用，包括桌面应用、服务端应用等"
+        "name": "Software Development",
+        "description": "Develop various software applications, including desktop and server applications"
     },
     {
-        "name": "网站开发",
-        "description": "开发各类网站应用，包括前端、后端开发等"
+        "name": "Web Development",
+        "description": "Develop various website applications, including frontend and backend development"
     },
     {
-        "name": "手机app开发",
-        "description": "开发iOS、Android等移动平台的应用程序"
+        "name": "Mobile App Development",
+        "description": "Develop applications for mobile platforms like iOS and Android"
     },
     {
-        "name": "AI或机器学习开发",
-        "description": "开发人工智能和机器学习相关算法、模型和应用"
+        "name": "AI/Machine Learning Development",
+        "description": "Develop artificial intelligence and machine learning related algorithms, models and applications"
     },
     {
-        "name": "UI或UX设计",
-        "description": "设计用户界面和用户体验，提升产品易用性"
+        "name": "UI/UX Design",
+        "description": "Design user interfaces and user experiences to improve product usability"
     },
     {
-        "name": "平面设计",
-        "description": "设计各类平面视觉内容，包括Logo、海报等"
+        "name": "Graphic Design",
+        "description": "Design various visual content, including logos, posters, etc."
     },
     {
-        "name": "市场营销",
-        "description": "负责产品推广、市场分析和用户增长等工作"
+        "name": "Marketing",
+        "description": "Responsible for product promotion, market analysis and user growth"
     },
     {
-        "name": "内容创作",
-        "description": "创作各类内容，包括文案、视频、音频等"
+        "name": "Content Creation",
+        "description": "Create various types of content, including copy, video, audio, etc."
     },
     {
-        "name": "项目管理",
-        "description": "负责项目的计划、执行、监控和收尾等管理工作"
+        "name": "Project Management",
+        "description": "Responsible for project planning, execution, monitoring and closing"
     },
     {
-        "name": "数据分析",
-        "description": "分析各类数据，提供数据洞察和决策支持"
+        "name": "Data Analysis",
+        "description": "Analyze various data, provide data insights and decision support"
     },
     {
-        "name": "金融/会计",
-        "description": "负责财务规划、资金管理和会计核算等工作"
+        "name": "Finance/Accounting",
+        "description": "Responsible for financial planning, fund management and accounting"
     }
 ]
 

@@ -65,6 +65,22 @@ class Project(db.Model):
                 'year_of_study': self.creator.year_of_study
             }
             
+        # 获取最近5个参与者信息
+        recent_participants = []
+        approved_applications = ProjectApplication.query.filter_by(
+            project_id=self.id, 
+            status=ProjectApplication.STATUS_PENDING
+        ).order_by(ProjectApplication.updated_at.desc()).limit(5).all()
+        
+        for app in approved_applications:
+            if app.applicant:
+                participant_info = {
+                    'user_id': app.applicant.user_id,
+                    'picture': app.applicant.picture,
+                    'full_name': app.applicant.full_name
+                }
+                recent_participants.append(participant_info)
+            
         return {
             'id': self.id,
             'name': self.name,
@@ -78,6 +94,7 @@ class Project(db.Model):
             'recruitment_status_text': '开放申请' if self.recruitment_status == self.RECRUITMENT_OPEN else '招募结束',
             'user_id': self.user_id,
             'creator_info': creator_info,
+            'recent_participants': recent_participants,
             'skill_requirements': [skill.to_dict() for skill in self.skill_requirements],
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
             'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S')

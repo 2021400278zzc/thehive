@@ -1,4 +1,5 @@
 from app import db
+from app.models.project import ProjectApplication
 from app.models.user import User
 from sqlalchemy import or_
 
@@ -81,6 +82,58 @@ class UserService:
         query = User.query
         
         if filters:
+            # 邮箱筛选
+            if 'email' in filters and filters['email']:
+                query = query.filter(User.email.like(f"%{filters['email']}%"))
+            
+            # 全名筛选
+            if 'full_name' in filters and filters['full_name']:
+                query = query.filter(User.full_name.like(f"%{filters['full_name']}%"))
+            
+            # 性别筛选
+            if 'gender' in filters and filters['gender']:
+                query = query.filter(User.gender == filters['gender'])
+            
+            # MBTI筛选
+            if 'mbti' in filters and filters['mbti']:
+                query = query.filter(User.mbti == filters['mbti'])
+            
+            # 星座筛选
+            if 'star_sign' in filters and filters['star_sign']:
+                query = query.filter(User.star_sign == filters['star_sign'])
+            
+            # 专业筛选
+            if 'major' in filters and filters['major']:
+                query = query.filter(User.major.like(f"%{filters['major']}%"))
+            
+            # Auth0标识筛选
+            if 'user_id' in filters and filters['user_id']:
+                query = query.filter(User.user_id == filters['user_id'])
+        
+        # 返回用户列表
+        users = query.all()
+        return [user.to_dict() for user in users] 
+    
+    @staticmethod
+    def get_participant_user_list(filters=None):
+        """
+        获取参与者用户列表，支持过滤条件
+        :param filters: 过滤条件字典
+        :return: 用户列表
+        """
+        query = User.query
+        
+        if filters:
+            # 项目ID筛选
+            if 'project_id' in filters and filters['project_id']:
+                # 通过子查询获取项目参与者
+                project_participants = db.session.query(ProjectApplication.user_id).filter(
+                    ProjectApplication.project_id == filters['project_id'],
+                    ProjectApplication.status == ProjectApplication.STATUS_APPROVED
+                ).distinct().subquery()
+                
+                query = query.filter(User.user_id.in_(project_participants))
+
             # 邮箱筛选
             if 'email' in filters and filters['email']:
                 query = query.filter(User.email.like(f"%{filters['email']}%"))
