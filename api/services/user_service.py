@@ -1,5 +1,5 @@
-from app import db
-from app.models.user import User
+from api import db
+from api.models.user import User
 from sqlalchemy import or_
 
 class UserService:

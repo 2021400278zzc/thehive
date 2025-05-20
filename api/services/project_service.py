@@ -1,5 +1,5 @@
-from app import db
-from app.models.project import Project, SkillRequirement, SkillType, ProjectApplication
+from api import db
+from api.models.project import Project, SkillRequirement, SkillType, ProjectApplication
 from datetime import datetime
 from sqlalchemy import or_, and_
 

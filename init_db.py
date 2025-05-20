@@ -1,6 +1,6 @@
-from app import db, create_app
-from app.models.project import SkillType, ProjectApplication
-from app.models.user import User
+from api import db, create_app
+from api.models.project import SkillType, ProjectApplication
+from api.models.user import User
 
 # 创建Flask应用
 app = create_app()

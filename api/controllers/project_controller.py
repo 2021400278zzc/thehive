@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
-from app.services.project_service import ProjectService, SkillTypeService, ProjectApplicationService
-from app.models.project import ProjectApplication
+from api.services.project_service import ProjectService, SkillTypeService, ProjectApplicationService
+from api.models.project import ProjectApplication
 
 project_bp = Blueprint('project', __name__)
 
