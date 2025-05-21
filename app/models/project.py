@@ -89,9 +89,9 @@ class Project(db.Model):
             'description': self.description,
             'goal': self.goal,
             'status': self.status,
-            'status_text': '进行中' if self.status == self.STATUS_IN_PROGRESS else '已完成',
+            'status_text': 'In progress' if self.status == self.STATUS_IN_PROGRESS else 'Completed',
             'recruitment_status': self.recruitment_status,
-            'recruitment_status_text': '开放申请' if self.recruitment_status == self.RECRUITMENT_OPEN else '招募结束',
+            'recruitment_status_text': 'Open for application' if self.recruitment_status == self.RECRUITMENT_OPEN else 'Application closed',
             'user_id': self.user_id,
             'creator_info': creator_info,
             'recent_participants': recent_participants,
@@ -156,10 +156,10 @@ class ProjectApplication(db.Model):
     def to_dict(self):
         """转换为字典"""
         status_text = {
-            self.STATUS_PENDING: '待处理',
-            self.STATUS_APPROVED: '已接受',
-            self.STATUS_REJECTED: '已拒绝'
-        }.get(self.status, '未知状态')
+            self.STATUS_PENDING: 'Pending',
+            self.STATUS_APPROVED: 'Approved',
+            self.STATUS_REJECTED: 'Rejected'
+        }.get(self.status, 'Unknown status')
         
             
         # 项目信息包含项目负责人信息
