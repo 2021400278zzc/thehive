@@ -272,6 +272,21 @@ class ProjectService:
         project = Project.query.get_or_404(project_id)
         return project.to_dict()
 
+    @staticmethod
+    def delete_project(project_id, user_id):
+        """
+        删除项目
+        :param project_id: 项目ID
+        :param user_id: 操作者用户ID（必须是项目创建者）
+        :return: 操作结果
+        """
+        project = Project.query.get_or_404(project_id)
+        if project.user_id != user_id:
+            raise ValueError("您不是项目负责人，无权删除该项目")
+        db.session.delete(project)
+        db.session.commit()
+        return {"success": True, "message": "项目已成功删除"}
+
 
 class ProjectApplicationService:
     @staticmethod

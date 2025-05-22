@@ -267,6 +267,29 @@ def get_project_detail(project_id):
         return jsonify({"data": project}), 200
     except Exception as e:
         return jsonify({"error": f"获取项目详情失败: {str(e)}"}), 500
+    
+@project_bp.route("/projects/<int:project_id>", methods=["DELETE"])
+def delete_project(project_id):
+    """
+    删除项目API
+
+    路径参数:
+    - project_id: 项目ID
+
+    请求参数 (URL查询参数):
+    - user_id: 操作者用户ID（必须是项目创建者）
+    """
+    user_id = request.args.get("user_id")
+    if not user_id:
+        return jsonify({"error": "缺少必填参数: user_id"}), 400
+
+    try:
+        result = ProjectService.delete_project(project_id, int(user_id))
+        return jsonify(result), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 403
+    except Exception as e:
+        return jsonify({"error": f"删除项目失败: {str(e)}"}), 500
 
 
 @project_bp.route("/project-applications", methods=["POST"])
