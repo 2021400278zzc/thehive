@@ -126,6 +126,7 @@ class ProjectService:
                 )
 
         # 返回项目列表
+        query = query.order_by(Project.created_at.desc())
         projects = query.all()
         return [
             {k: v for k, v in project.to_dict().items() if k != "recent_participants"}
