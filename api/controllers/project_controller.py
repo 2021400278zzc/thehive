@@ -284,7 +284,7 @@ def delete_project(project_id):
         return jsonify({"error": "缺少必填参数: user_id"}), 400
 
     try:
-        result = ProjectService.delete_project(project_id, int(user_id))
+        result = ProjectService.delete_project(project_id, user_id) 
         return jsonify(result), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 403
