@@ -249,6 +249,80 @@ class ProjectService:
         project = Project.query.get_or_404(project_id)
         return project.to_dict()
 
+    @staticmethod
+    def update_project(project_id, data, user_id):
+        """
+        更新项目信息
+        :param project_id: 项目ID
+        :param data: 包含更新信息的字典
+        :param user_id: 操作者ID (必须是项目创建者)
+        :return: 更新后的项目对象
+        """
+        # 验证项目是否存在
+        project = Project.query.get_or_404(project_id)
+        
+        # 验证操作者权限
+        if project.user_id != user_id:
+            raise ValueError("您不是项目负责人，无权修改项目信息")
+        
+        # 更新基本信息
+        if 'name' in data:
+            project.name = data['name']
+        if 'project_type' in data:
+            project.project_type = data['project_type']
+        if 'end_time' in data:
+            project.end_time = datetime.strptime(data['end_time'], '%Y-%m-%d %H:%M:%S')
+        if 'description' in data:
+            project.description = data['description']
+        if 'goal' in data:
+            project.goal = data['goal']
+        if 'status' in data:
+            project.status = data['status']
+        if 'recruitment_status' in data:
+            project.recruitment_status = data['recruitment_status']
+        
+        # 更新技能需求
+        if 'skill_requirements' in data:
+            # 删除现有的技能需求
+            SkillRequirement.query.filter_by(project_id=project_id).delete()
+            
+            # 添加新的技能需求
+            for skill_data in data['skill_requirements']:
+                skill = SkillRequirement(
+                    project_id=project_id,
+                    skill_type_id=skill_data['skill_type_id'],
+                    required_count=skill_data['required_count'],
+                    importance=skill_data['importance'],
+                    description=skill_data.get('description')
+                )
+                project.skill_requirements.append(skill)
+        
+        db.session.commit()
+        return project
+
+    @staticmethod
+    def delete_project(project_id, user_id):
+        """
+        删除项目
+        :param project_id: 项目ID
+        :param user_id: 操作者ID (必须是项目创建者)
+        :return: 操作结果
+        """
+        # 验证项目是否存在
+        project = Project.query.get_or_404(project_id)
+        
+        # 验证操作者权限
+        if project.user_id != user_id:
+            raise ValueError("您不是项目负责人，无权删除项目")
+        
+        # 删除项目相关的所有申请记录
+        ProjectApplication.query.filter_by(project_id=project_id).delete()
+        
+        # 删除项目
+        db.session.delete(project)
+        db.session.commit()
+        
+        return {"success": True, "message": "项目已成功删除"}
 
 class ProjectApplicationService:
     @staticmethod

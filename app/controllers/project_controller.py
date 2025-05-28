@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from app.services.project_service import ProjectService, SkillTypeService, ProjectApplicationService
 from app.models.project import ProjectApplication
+from datetime import datetime
 
 project_bp = Blueprint('project', __name__)
 
@@ -382,4 +383,108 @@ def remove_project_participant():
     except ValueError as e:
         return jsonify({'error': str(e)}), 403
     except Exception as e:
-        return jsonify({'error': f'移除项目参与者失败: {str(e)}'}), 500 
+        return jsonify({'error': f'移除项目参与者失败: {str(e)}'}), 500
+
+@project_bp.route('/projects/<int:project_id>', methods=['PUT'])
+def update_project(project_id):
+    """
+    更新项目信息API
+    请求参数:
+    {
+        "name": "项目名称",  # 可选
+        "project_type": "项目类型",  # 可选
+        "end_time": "项目结束时间",  # 可选,格式:YYYY-MM-DD HH:MM:SS
+        "description": "项目描述",  # 可选
+        "goal": "项目目标",  # 可选
+        "status": 项目状态,  # 可选,1-进行中、2-已完成
+        "recruitment_status": 招募状态,  # 可选,1-开放申请、2-招募结束
+        "skill_requirements": [  # 可选
+            {
+                "skill_type_id": 技能类型ID,
+                "required_count": 数量,
+                "importance": 重要程度(1-5),
+                "description": "技能描述"  # 可选
+            }
+        ],
+        "user_id": 操作者ID  # 必填，必须是项目创建者
+    }
+    """
+    data = request.get_json()
+    
+    # 参数验证
+    if not data:
+        return jsonify({'error': '请求体不能为空'}), 400
+    
+    if 'user_id' not in data:
+        return jsonify({'error': '缺少必填字段: user_id'}), 400
+    
+    # 验证日期格式
+    if 'end_time' in data:
+        try:
+            datetime.strptime(data['end_time'], '%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            return jsonify({'error': '结束时间格式无效,请使用YYYY-MM-DD HH:MM:SS格式'}), 400
+    
+    # 验证状态值
+    if 'status' in data:
+        if data['status'] not in [1, 2]:
+            return jsonify({'error': '项目状态值无效,必须为1(进行中)或2(已完成)'}), 400
+    
+    if 'recruitment_status' in data:
+        if data['recruitment_status'] not in [1, 2]:
+            return jsonify({'error': '招募状态值无效,必须为1(开放申请)或2(招募结束)'}), 400
+    
+    # 验证技能需求数据
+    if 'skill_requirements' in data:
+        if not isinstance(data['skill_requirements'], list):
+            return jsonify({'error': 'skill_requirements必须是数组'}), 400
+            
+        for i, skill in enumerate(data['skill_requirements']):
+            required_skill_fields = ['skill_type_id', 'required_count', 'importance']
+            for field in required_skill_fields:
+                if field not in skill:
+                    return jsonify({'error': f'第{i+1}个技能需求缺少必填字段: {field}'}), 400
+            
+            # 验证重要程度是否在1-5范围
+            if not (1 <= skill['importance'] <= 5):
+                return jsonify({'error': f'第{i+1}个技能需求的重要程度必须在1-5之间'}), 400
+            
+            # 验证技能类型ID是否存在
+            try:
+                SkillTypeService.get_skill_type_by_id(skill['skill_type_id'])
+            except:
+                return jsonify({'error': f'第{i+1}个技能需求的技能类型ID不存在'}), 400
+    
+    try:
+        project = ProjectService.update_project(project_id, data, data['user_id'])
+        return jsonify({
+            'message': '项目更新成功',
+            'data': project.to_dict()
+        }), 200
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 403
+    except Exception as e:
+        return jsonify({'error': f'更新项目失败: {str(e)}'}), 500
+
+@project_bp.route('/projects/<int:project_id>', methods=['DELETE'])
+def delete_project(project_id):
+    """
+    删除项目API
+    
+    请求参数 (URL查询参数):
+    - user_id: 操作者ID (必填，必须是项目创建者)
+    """
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({'error': '缺少必填参数: user_id'}), 400
+    
+    try:
+        result = ProjectService.delete_project(project_id, user_id)
+        return jsonify({
+            'message': '项目删除成功',
+            'data': result
+        }), 200
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 403
+    except Exception as e:
+        return jsonify({'error': f'删除项目失败: {str(e)}'}), 500 
