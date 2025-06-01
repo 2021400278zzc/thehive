@@ -38,5 +38,15 @@ def init_db():
 def index():
     return "TheHive API 服务正常运行"
 
+@app.route('/health')
+def health_check():
+    """健康检查端点"""
+    try:
+        # 检查数据库连接
+        db.session.execute(text('SELECT 1'))
+        return {"status": "healthy", "database": "connected"}, 200
+    except Exception as e:
+        return {"status": "unhealthy", "error": str(e)}, 500
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000, host='0.0.0.0') 

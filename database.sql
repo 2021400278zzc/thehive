@@ -79,6 +79,37 @@ CREATE TABLE IF NOT EXISTS project_applications (
     FOREIGN KEY (skill_type_id) REFERENCES skill_types(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='项目申请表';
 
+-- 项目交付物表
+CREATE TABLE IF NOT EXISTS project_deliverables (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    project_id INT NOT NULL COMMENT '项目ID',
+    uploader_id VARCHAR(100) NOT NULL COMMENT '上传者ID',
+    file_url VARCHAR(255) COMMENT '文件存储URL',
+    file_type VARCHAR(50) COMMENT '文件类型',
+    file_name VARCHAR(255) COMMENT '文件名',
+    file_size INT COMMENT '文件大小（字节）',
+    link_url VARCHAR(255) COMMENT '外部链接（如为URL导入）',
+    status TINYINT DEFAULT 0 COMMENT '交付物状态：0-草稿，1-已提交，2-已审核',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+    FOREIGN KEY (uploader_id) REFERENCES users(user_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='项目交付物表';
+
+-- 交付物确认表
+CREATE TABLE IF NOT EXISTS deliverable_confirmations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    project_id INT NOT NULL COMMENT '项目ID',
+    deliverable_id INT NOT NULL COMMENT '交付物ID',
+    user_id VARCHAR(100) NOT NULL COMMENT '贡献者ID',
+    confirmed TINYINT(1) DEFAULT 1 COMMENT '是否已确认',
+    confirmed_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '确认时间',
+    UNIQUE KEY uq_deliverable_user (deliverable_id, user_id),
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+    FOREIGN KEY (deliverable_id) REFERENCES project_deliverables(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='交付物确认表';
+
 -- 插入初始技能类型数据
 INSERT INTO skill_types (name, description) VALUES
 ('Software Development', 'Develop various software applications, including desktop and server applications'),
