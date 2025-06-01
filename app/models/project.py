@@ -196,3 +196,68 @@ class ProjectApplication(db.Model):
             'project_info': project_info,
             'creator_info': creator_info
         } 
+
+class ProjectDeliverable(db.Model):
+    """项目交付物模型"""
+    __tablename__ = 'project_deliverables'
+
+    STATUS_DRAFT = 0      # 草稿
+    STATUS_SUBMITTED = 1  # 已提交
+    STATUS_REVIEWED = 2   # 已审核
+
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=False, comment='项目ID')
+    uploader_id = db.Column(db.String(100), db.ForeignKey('users.user_id'), nullable=False, comment='上传者ID')
+    file_url = db.Column(db.String(255), comment='文件存储URL')
+    file_type = db.Column(db.String(50), comment='文件类型')
+    file_name = db.Column(db.String(255), comment='文件名')
+    file_size = db.Column(db.Integer, comment='文件大小（字节）')
+    link_url = db.Column(db.String(255), comment='外部链接（如为URL导入）')
+    status = db.Column(db.Integer, default=STATUS_DRAFT, comment='交付物状态：0-草稿，1-已提交，2-已审核')
+    created_at = db.Column(db.DateTime, default=datetime.now, comment='创建时间')
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now, comment='更新时间')
+
+    # 关联关系
+    project = db.relationship('Project', backref='deliverables', lazy=True)
+    uploader = db.relationship('User', backref='uploaded_deliverables', lazy=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'project_id': self.project_id,
+            'uploader_id': self.uploader_id,
+            'file_url': self.file_url,
+            'file_type': self.file_type,
+            'file_name': self.file_name,
+            'file_size': self.file_size,
+            'link_url': self.link_url,
+            'status': self.status,
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
+        } 
+
+class DeliverableConfirmation(db.Model):
+    """交付物确认模型"""
+    __tablename__ = 'deliverable_confirmations'
+
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=False, comment='项目ID')
+    deliverable_id = db.Column(db.Integer, db.ForeignKey('project_deliverables.id'), nullable=False, comment='交付物ID')
+    user_id = db.Column(db.String(100), db.ForeignKey('users.user_id'), nullable=False, comment='贡献者ID')
+    confirmed = db.Column(db.Boolean, default=True, comment='是否已确认')
+    confirmed_at = db.Column(db.DateTime, default=datetime.now, comment='确认时间')
+
+    # 关联关系
+    deliverable = db.relationship('ProjectDeliverable', backref='confirmations', lazy=True)
+    user = db.relationship('User', backref='deliverable_confirmations', lazy=True)
+    project = db.relationship('Project', backref='deliverable_confirmations', lazy=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'project_id': self.project_id,
+            'deliverable_id': self.deliverable_id,
+            'user_id': self.user_id,
+            'confirmed': self.confirmed,
+            'confirmed_at': self.confirmed_at.strftime('%Y-%m-%d %H:%M:%S') if self.confirmed_at else None
+        } 
