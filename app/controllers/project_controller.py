@@ -466,14 +466,15 @@ def update_project(project_id):
     except Exception as e:
         return jsonify({'error': f'更新项目失败: {str(e)}'}), 500
 
-@project_bp.route('/projects/<int:project_id>', methods=['DELETE'])
-def delete_project(project_id):
+@project_bp.route('/projects', methods=['DELETE'])
+def delete_project():
     """
     删除项目API
     
     请求参数 (URL查询参数):
     - user_id: 操作者ID (必填，必须是项目创建者)
     """
+    project_id = request.args.get('project_id')
     user_id = request.args.get('user_id')
     if not user_id:
         return jsonify({'error': '缺少必填参数: user_id'}), 400
@@ -489,11 +490,12 @@ def delete_project(project_id):
     except Exception as e:
         return jsonify({'error': f'删除项目失败: {str(e)}'}), 500
 
-@project_bp.route('/projects/<int:project_id>/deliverables', methods=['GET'])
-def get_project_deliverables(project_id):
+@project_bp.route('/projects/deliverables', methods=['GET'])
+def get_project_deliverables():
     """
     获取项目交付物列表，支持返回当前用户确认状态
     """
+    project_id = request.args.get('project_id')
     user_id = request.args.get('user_id')
     try:
         deliverables = ProjectDeliverableService.get_deliverables_by_project(project_id)
@@ -506,13 +508,14 @@ def get_project_deliverables(project_id):
     except Exception as e:
         return jsonify({'error': f'获取交付物失败: {str(e)}'}), 500
 
-@project_bp.route('/projects/<int:project_id>/deliverables', methods=['POST'])
-def upload_project_deliverable(project_id):
+@project_bp.route('/projects/deliverables', methods=['POST'])
+def upload_project_deliverable():
     """
     上传交付物（支持文件和URL导入）
     支持 form-data: file, file_type, file_name, file_size, link_url, status, uploader_id
     """
     try:
+        project_id = request.form.get('project_id')
         uploader_id = request.form.get('uploader_id')
         if not uploader_id:
             return jsonify({'error': '缺少必填参数: uploader_id'}), 400
@@ -526,16 +529,17 @@ def upload_project_deliverable(project_id):
         }
         file = request.files.get('file')
         deliverable = ProjectDeliverableService.create_deliverable(data, uploader_id, file)
-        return jsonify({'message': '交付物上传成功', 'data': deliverable.to_dict()}), 201
+        return jsonify({'message': '交付物上传成功', 'data': deliverable.to_dict()}), 200
     except Exception as e:
         return jsonify({'error': f'上传交付物失败: {str(e)}'}), 500
 
-@project_bp.route('/deliverables/<int:deliverable_id>', methods=['DELETE'])
-def delete_project_deliverable(deliverable_id):
+@project_bp.route('/deliverables', methods=['DELETE'])
+def delete_project_deliverable():
     """
     删除交付物（仅上传者可删）
     需传 uploader_id
     """
+    deliverable_id = request.args.get('deliverable_id')
     uploader_id = request.args.get('uploader_id')
     if not uploader_id:
         return jsonify({'error': '缺少必填参数: uploader_id'}), 400
@@ -547,13 +551,14 @@ def delete_project_deliverable(deliverable_id):
     except Exception as e:
         return jsonify({'error': f'删除交付物失败: {str(e)}'}), 500
 
-@project_bp.route('/deliverables/<int:deliverable_id>/status', methods=['PUT'])
-def update_deliverable_status(deliverable_id):
+@project_bp.route('/deliverables/status', methods=['PUT'])
+def update_deliverable_status():
     """
     更新交付物状态（提交/审核）
     需传 status, reviewer_id（审核时）
     """
     data = request.get_json()
+    deliverable_id = data.get('deliverable_id')
     if 'status' not in data:
         return jsonify({'error': '缺少必填字段: status'}), 400
     try:
@@ -572,12 +577,13 @@ def get_deliverable_file(filename):
     """
     return send_from_directory('static/deliverables', filename)
 
-@project_bp.route('/deliverables/<int:deliverable_id>', methods=['GET'])
-def get_deliverable_detail(deliverable_id):
+@project_bp.route('/deliverables', methods=['GET'])
+def get_deliverable_detail():
     """
     获取交付物详情
     """
     try:
+        deliverable_id = request.args.get('deliverable_id')
         deliverable = ProjectDeliverableService.get_deliverable_by_id(deliverable_id)
         if not deliverable:
             return jsonify({'error': '交付物不存在'}), 404
@@ -585,12 +591,13 @@ def get_deliverable_detail(deliverable_id):
     except Exception as e:
         return jsonify({'error': f'获取交付物详情失败: {str(e)}'}), 500
 
-@project_bp.route('/deliverables/<int:deliverable_id>/confirm', methods=['POST'])
-def confirm_deliverable(deliverable_id):
+@project_bp.route('/deliverables/confirm', methods=['POST'])
+def confirm_deliverable():
     """
     贡献者确认交付物
     需传 user_id
     """
+    deliverable_id = request.json.get('deliverable_id')
     user_id = request.json.get('user_id')
     if not user_id:
         return jsonify({'error': '缺少必填参数: user_id'}), 400
@@ -604,11 +611,12 @@ def confirm_deliverable(deliverable_id):
     except Exception as e:
         return jsonify({'error': f'交付物确认失败: {str(e)}'}), 500
 
-@project_bp.route('/deliverables/<int:deliverable_id>/confirm-status', methods=['GET'])
-def get_deliverable_confirm_status(deliverable_id):
+@project_bp.route('/deliverables/confirm-status', methods=['GET'])
+def get_deliverable_confirm_status():
     """
     查询某用户对某交付物的确认状态
     """
+    deliverable_id = request.args.get('deliverable_id')
     user_id = request.args.get('user_id')
     if not user_id:
         return jsonify({'error': '缺少必填参数: user_id'}), 400
@@ -618,11 +626,12 @@ def get_deliverable_confirm_status(deliverable_id):
     except Exception as e:
         return jsonify({'error': f'查询交付物确认状态失败: {str(e)}'}), 500
 
-@project_bp.route('/projects/<int:project_id>/confirm-status', methods=['GET'])
-def get_project_confirm_status(project_id):
+@project_bp.route('/projects/confirm-status', methods=['GET'])
+def get_project_confirm_status():
     """
     查询某用户对整个项目交付物的确认状态
     """
+    project_id = request.args.get('project_id')
     user_id = request.args.get('user_id')
     if not user_id:
         return jsonify({'error': '缺少必填参数: user_id'}), 400
