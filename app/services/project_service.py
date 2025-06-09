@@ -497,7 +497,7 @@ class ProjectDeliverableService:
         return ProjectDeliverable.query.get(deliverable_id)
 
     @staticmethod
-    def create_deliverable(data, uploader_id, file=None):
+    def create_deliverable(project_id, data, uploader_id, file=None):
         """
         创建交付物（支持文件或URL）
         :param data: dict, 包含 project_id, file_type, file_name, file_size, link_url, status
@@ -512,18 +512,18 @@ class ProjectDeliverableService:
             file_name=data.get('file_name'),
             file_size=data.get('file_size'),
             link_url=data.get('link_url'),
-            status=data.get('status', ProjectDeliverable.STATUS_DRAFT)
+            status=data.get('status', ProjectDeliverable.STATUS_DRAFT)  
         )
         # 文件上传处理
         if file:
             filename = secure_filename(file.filename)
             # 使用绝对路径
-            upload_folder = os.path.join(current_app.root_path, 'static', 'deliverables')
+            upload_folder = os.path.join(current_app.root_path, 'static', 'deliverables',str(project_id))
             os.makedirs(upload_folder, exist_ok=True)
             file_path = os.path.join(upload_folder, filename)
             file.save(file_path)
             # 存储相对URL路径
-            deliverable.file_url = f'/api/static/deliverables/{filename}'
+            deliverable.file_url = f'/api/static/deliverables/{project_id}/{filename}'
             deliverable.file_name = filename
             deliverable.file_size = os.path.getsize(file_path)
         db.session.add(deliverable)

@@ -528,7 +528,7 @@ def upload_project_deliverable():
             'status': int(request.form.get('status', 0)),
         }
         file = request.files.get('file')
-        deliverable = ProjectDeliverableService.create_deliverable(data, uploader_id, file)
+        deliverable = ProjectDeliverableService.create_deliverable(project_id, data, uploader_id, file)
         return jsonify({'message': '交付物上传成功', 'data': deliverable.to_dict()}), 200
     except Exception as e:
         return jsonify({'error': f'上传交付物失败: {str(e)}'}), 500
@@ -570,12 +570,15 @@ def update_deliverable_status():
     except Exception as e:
         return jsonify({'error': f'更新交付物状态失败: {str(e)}'}), 500
 
-@project_bp.route('/static/deliverables/<path:filename>', methods=['GET'])
-def get_deliverable_file(filename):
+@project_bp.route('/static/deliverables', methods=['GET'])
+def get_deliverable_file():
     """
     下载交付物文件
     """
-    return send_from_directory('static/deliverables', filename)
+    project_id = request.args.get('project_id')
+    filename = request.args.get('filename')
+    project_id = str(project_id)
+    return send_from_directory(f'static/deliverables/{project_id}',filename)
 
 @project_bp.route('/deliverables', methods=['GET'])
 def get_deliverable_detail():
