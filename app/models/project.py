@@ -36,7 +36,7 @@ class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, comment='项目名称')
     project_type = db.Column(db.String(50), nullable=False, comment='项目类型')
-    end_time = db.Column(db.DateTime, nullable=False, comment='项目结束时间')
+    end_time = db.Column(db.DateTime, nullable=True, comment='项目结束时间')
     description = db.Column(db.Text, nullable=True, comment='项目描述')
     goal = db.Column(db.Text, nullable=True, comment='项目目标')
     status = db.Column(db.Integer, default=STATUS_IN_PROGRESS, comment='项目状态：1-进行中、2-已完成')
@@ -85,7 +85,7 @@ class Project(db.Model):
             'id': self.id,
             'name': self.name,
             'project_type': self.project_type,
-            'end_time': self.end_time.strftime('%Y-%m-%d %H:%M:%S'),
+            'end_time': self.end_time.strftime('%Y-%m-%d %H:%M:%S') if self.end_time else None,
             'description': self.description,
             'goal': self.goal,
             'status': self.status,

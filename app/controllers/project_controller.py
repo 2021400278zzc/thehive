@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify, send_from_directory
 import app.services.project_service
 from app.services.project_service import SkillTypeService, ProjectApplicationService, ProjectDeliverableService, DeliverableConfirmationService
-from app.models.project import ProjectApplication
+from app.models.project import Project, ProjectApplication
+from app.models.project_contribution import ProjectContribution
 from datetime import datetime
 
 project_bp = Blueprint('project', __name__, url_prefix='/api')
@@ -64,7 +65,7 @@ def create_project():
     data = request.get_json()
     print(data)
     # 参数验证
-    required_fields = ['name', 'project_type', 'end_time', 'user_id']
+    required_fields = ['name', 'project_type', 'user_id']
     for field in required_fields:
         if field not in data:
             return jsonify({'error': f'缺少必填字段: {field}'}), 400
@@ -708,4 +709,69 @@ def complete_project_by_confirmation():
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
     except Exception as e:
-        return jsonify({'error': f'完成项目失败: {str(e)}'}), 500 
+        return jsonify({'error': f'完成项目失败: {str(e)}'}), 500
+
+@project_bp.route('/projects/my-all', methods=['GET'])
+def get_my_all_projects():
+    """
+    获取我创建的和参与的所有项目API，按创建时间倒序排序
+    
+    请求参数 (URL查询参数):
+    - user_id: 用户ID (必需)    
+    """
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({'error': '缺少必需的 user_id 参数'}), 400
+        
+    try:
+        # 获取我创建的项目
+        founder_filters = {'user_id': user_id}
+        founder_projects = app.services.project_service.ProjectService.get_founder_project_list(founder_filters)
+        
+        # 获取我参与的项目
+        participant_filters = {'user_id': user_id}
+        participant_projects = app.services.project_service.ProjectService.get_participant_project_list(participant_filters)
+        
+        # 合并项目列表并按创建时间倒序排序
+        all_projects = founder_projects + participant_projects
+        all_projects.sort(key=lambda x: x['created_at'], reverse=True)
+        
+        # 格式化返回数据
+        formatted_projects = []
+        for project in all_projects:
+            # 获取项目贡献记录
+            contribution = ProjectContribution.query.filter_by(
+                project_id=project['id'],
+                user_id=user_id
+            ).first()
+            
+            # 获取技能类型
+            skill_type = None
+            if project['skill_requirements']:
+                # 获取第一个技能需求的技能类型名称
+                skill_type = project['skill_requirements'][0]['skill_type_name']
+
+            formatted_project = {
+                'name': project['name'],
+                'created_by': {
+                    'user_id': project['creator_info']['user_id'],
+                    'full_name': project['creator_info']['full_name'],
+                    'picture': project['creator_info']['picture']
+                },
+                'period': {
+                    'start': project['created_at'],
+                    'end': project['end_time'] if project['end_time'] else 'Current'
+                },
+                'contribute_for': skill_type or 'UI/UX Design',  # 如果没有技能需求，默认显示 UI/UX Design
+                'stars': {
+                    'earned': project['status'] == 2,  # 如果项目完成，显示已获得星级
+                    'count': contribution.stars_earned if contribution and contribution.stars_earned else 0
+                },
+                'project_id': project['id'],
+                'status': project['status']
+            }
+            formatted_projects.append(formatted_project)
+            
+        return jsonify({'data': formatted_projects, 'total': len(formatted_projects)}), 200
+    except Exception as e:
+        return jsonify({'error': f'获取项目列表失败: {str(e)}'}), 500 

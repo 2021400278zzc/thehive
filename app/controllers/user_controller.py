@@ -53,8 +53,8 @@ def get_user(user_id):
     except Exception as e:
         return jsonify({'error': f'获取用户详情失败: {str(e)}'}), 500
 
-@user_bp.route('/users/by-auth-id/<auth_id>', methods=['GET'])
-def get_user_by_auth_id(auth_id):
+@user_bp.route('/users/by-auth-id', methods=['GET'])
+def get_user_by_auth_id():
     """
     根据Auth0标识获取用户API
     
@@ -62,6 +62,7 @@ def get_user_by_auth_id(auth_id):
     - auth_id: Auth0用户标识
     """
     try:
+        auth_id = request.args.get('auth_id')
         user = UserService.get_user_by_auth_id(auth_id)
         if not user:
             return jsonify({'error': '用户不存在'}), 404
@@ -69,8 +70,8 @@ def get_user_by_auth_id(auth_id):
     except Exception as e:
         return jsonify({'error': f'获取用户详情失败: {str(e)}'}), 500
 
-@user_bp.route('/users/by-auth-id/<auth_id>', methods=['PUT'])
-def update_user(auth_id):
+@user_bp.route('/users/by-auth-id', methods=['PUT'])
+def update_user():
     """
     更新用户资料API
     路径参数:
@@ -97,6 +98,7 @@ def update_user(auth_id):
     data = request.get_json()
     
     try:
+        auth_id = request.args.get('auth_id')
         user = UserService.update_user(auth_id, data)
         return jsonify({'message': '用户资料更新成功', 'data': user.to_dict()}), 200
     except ValueError as e:

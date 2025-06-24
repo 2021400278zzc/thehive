@@ -56,33 +56,44 @@ class ProjectService:
             raise ValueError("创建项目必须提供用户ID")
             
         # 创建项目
-        project = Project(
-            name=data['name'],
-            project_type=data['project_type'],
-            end_time=datetime.strptime(data['end_time'], '%Y-%m-%d %H:%M:%S'),
-            description=data.get('description'),
-            goal=data.get('goal'),
-            status=Project.STATUS_IN_PROGRESS,
-            recruitment_status=Project.RECRUITMENT_OPEN,
-            user_id=user_id
-        )
-        
-        # 添加技能需求
-        skills_data = data.get('skill_requirements', [])
-        for skill_data in skills_data:
-            skill = SkillRequirement(
-                skill_type_id=skill_data['skill_type_id'],
-                required_count=skill_data['required_count'],
-                importance=skill_data['importance'],
-                description=skill_data.get('description')
+        try:
+            end_time = None
+            if data.get('end_time'):
+                try:
+                    end_time = datetime.strptime(data['end_time'], '%Y-%m-%d %H:%M:%S')
+                except ValueError:
+                    raise ValueError("项目结束时间格式错误，请使用 'YYYY-MM-DD HH:MM:SS' 格式")
+                    
+            project = Project(
+                name=data['name'],
+                project_type=data['project_type'],
+                end_time=end_time,
+                description=data.get('description'),
+                goal=data.get('goal'),
+                status=Project.STATUS_IN_PROGRESS,
+                recruitment_status=Project.RECRUITMENT_OPEN,
+                user_id=user_id
             )
-            project.skill_requirements.append(skill)
-        
-        # 保存到数据库
-        db.session.add(project)
-        db.session.commit()
-        
-        return project
+            
+            # 添加技能需求
+            skills_data = data.get('skill_requirements', [])
+            for skill_data in skills_data:
+                skill = SkillRequirement(
+                    skill_type_id=skill_data['skill_type_id'],
+                    required_count=skill_data['required_count'],
+                    importance=skill_data['importance'],
+                    description=skill_data.get('description')
+                )
+                project.skill_requirements.append(skill)
+            
+            # 保存到数据库
+            db.session.add(project)
+            db.session.commit()
+            
+            return project
+        except Exception as e:
+            db.session.rollback()
+            raise ValueError(f"创建项目时发生错误: {str(e)}")
     
     @staticmethod
     def get_project_list(filters=None):
@@ -326,7 +337,10 @@ class ProjectService:
         if 'project_type' in data:
             project.project_type = data['project_type']
         if 'end_time' in data:
-            project.end_time = datetime.strptime(data['end_time'], '%Y-%m-%d %H:%M:%S')
+            try:
+                project.end_time = datetime.strptime(data['end_time'], '%Y-%m-%d %H:%M:%S') if data['end_time'] else None
+            except ValueError:
+                raise ValueError("项目结束时间格式错误，请使用 'YYYY-MM-DD HH:MM:SS' 格式")
         if 'description' in data:
             project.description = data['description']
         if 'goal' in data:
@@ -648,29 +662,29 @@ class ProjectDeliverableService:
     @staticmethod
     def check_and_complete_project(project_id):
         """
-        检查项目所有交付物是否都已审核通过，如果是则标记项目为完成
+        将项目标记为完成
         :param project_id: 项目ID
         """
         project = Project.query.get_or_404(project_id)
         if project.status == Project.STATUS_COMPLETED: # 如果项目已经完成，则不重复处理
             return
         
-        # 获取所有已提交的交付物
-        submitted_deliverables = ProjectDeliverable.query.filter_by(
-            project_id=project_id,
-            status=ProjectDeliverable.STATUS_SUBMITTED
-        ).all()
+        # # 获取所有已提交的交付物
+        # submitted_deliverables = ProjectDeliverable.query.filter_by(
+        #     project_id=project_id,
+        #     status=ProjectDeliverable.STATUS_SUBMITTED
+        # ).all()
 
-        # 获取所有已审核的交付物
-        reviewed_deliverables = ProjectDeliverable.query.filter_by(
-            project_id=project_id,
-            status=ProjectDeliverable.STATUS_REVIEWED
-        ).all()
+        # # 获取所有已审核的交付物
+        # reviewed_deliverables = ProjectDeliverable.query.filter_by(
+        #     project_id=project_id,
+        #     status=ProjectDeliverable.STATUS_REVIEWED
+        # ).all()
 
-        # 如果所有已提交的交付物都已审核通过，则标记项目为完成
-        if len(submitted_deliverables) > 0 and len(submitted_deliverables) == len(reviewed_deliverables):
-            project.status = Project.STATUS_COMPLETED
-            db.session.commit()
+        # # 如果所有已提交的交付物都已审核通过，则标记项目为完成
+        # if len(submitted_deliverables) > 0 and len(submitted_deliverables) == len(reviewed_deliverables):
+        project.status = Project.STATUS_COMPLETED
+        db.session.commit()
 
 class DeliverableConfirmationService:
     @staticmethod
