@@ -609,7 +609,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["name", "project_type", "end_time", "user_id"],
+                "required": ["name", "project_type", "user_id"],
                 "properties": {
                   "name": {
                     "type": "string",
@@ -1453,6 +1453,132 @@
           }
         }
       }
+    },
+    "/api/projects/my-all": {
+      "get": {
+        "tags": ["项目"],
+        "summary": "获取我创建和参与的所有项目",
+        "description": "获取用户创建和参与的所有项目列表，按创建时间倒序排序，用于个人主页的项目展示",
+        "operationId": "getMyAllProjects",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "description": "用户ID（Auth0用户标识）",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取项目列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MyProject"
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "description": "项目总数"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数有误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/complete": {
+      "post": {
+        "tags": ["项目"],
+        "summary": "完成项目",
+        "description": "将项目标记为完成状态",
+        "operationId": "completeProject",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["project_id"],
+                "properties": {
+                  "project_id": {
+                    "type": "integer",
+                    "description": "项目ID"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "项目已成功标记为完成",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "项目已成功标记为完成"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数有误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1819,6 +1945,75 @@
                 }
               }
             }
+          }
+        }
+      },
+      "MyProject": {
+        "type": "object",
+        "description": "用户项目卡片信息",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "项目名称"
+          },
+          "created_by": {
+            "type": "object",
+            "description": "项目创建者信息",
+            "properties": {
+              "user_id": {
+                "type": "string",
+                "description": "创建者用户ID"
+              },
+              "full_name": {
+                "type": "string",
+                "description": "创建者全名"
+              },
+              "picture": {
+                "type": "string",
+                "description": "创建者头像URL"
+              }
+            }
+          },
+          "period": {
+            "type": "object",
+            "description": "项目时间段",
+            "properties": {
+              "start": {
+                "type": "string",
+                "format": "date-time",
+                "description": "项目开始时间（创建时间）"
+              },
+              "end": {
+                "type": "string",
+                "description": "项目结束时间，如果为空则显示 'Current'"
+              }
+            }
+          },
+          "contribute_for": {
+            "type": "string",
+            "description": "贡献的技能类型，如 'UI/UX Design'"
+          },
+          "stars": {
+            "type": "object",
+            "description": "星级评价信息",
+            "properties": {
+              "earned": {
+                "type": "boolean",
+                "description": "是否已获得星级（项目完成时为true）"
+              },
+              "count": {
+                "type": "integer",
+                "description": "星级数量，从贡献记录中获取，默认为0"
+              }
+            }
+          },
+          "project_id": {
+            "type": "integer",
+            "description": "项目ID"
+          },
+          "status": {
+            "type": "integer",
+            "description": "项目状态：1-进行中、2-已完成"
           }
         }
       }

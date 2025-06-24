@@ -160,7 +160,7 @@ python app.py
 {
     "name": "项目名称",
     "project_type": "项目类型",
-    "end_time": "项目结束时间",
+    "end_time": "项目结束时间",  // 可选，格式：YYYY-MM-DD HH:MM:SS
     "description": "项目描述",  // 可选
     "goal": "项目目标",  // 可选
     "user_id": "创建者Auth0用户标识",  // 必填，字符串形式
@@ -192,4 +192,66 @@ python app.py
 - **URL**: `/api/projects/:project_id`
 - **方法**: `GET`
 - **路径参数**:
-  - `project_id`: 项目ID 
+  - `project_id`: 项目ID
+
+### 6. 获取我创建和参与的所有项目
+
+- **URL**: `/api/projects/my-all`
+- **方法**: `GET`
+- **查询参数**:
+  - `user_id`: 用户ID（Auth0用户标识，必需）
+- **响应**:
+```json
+{
+    "data": [
+        {
+            "name": "项目名称",
+            "created_by": {
+                "user_id": "auth0|xxx",
+                "full_name": "用户全名",
+                "picture": "头像URL"
+            },
+            "period": {
+                "start": "2025-03-01 00:00:00",
+                "end": "2025-06-10 00:00:00"  // 或 "Current"
+            },
+            "contribute_for": "UI/UX Design",  // 从项目技能需求中获取
+            "stars": {
+                "earned": true,  // 项目完成时为 true，进行中为 false
+                "count": 0  // 从贡献记录中获取，默认为 0
+            },
+            "project_id": 1,
+            "status": 1  // 项目状态：1=进行中，2=已完成
+        }
+    ],
+    "total": 1
+}
+```
+
+### 7. 完成项目
+
+- **URL**: `/api/projects/complete`
+- **方法**: `POST`
+- **请求体**:
+```json
+{
+    "project_id": 1
+}
+```
+- **说明**: 直接将项目状态标记为完成，无需检查交付物状态
+
+### 8. 获取我创建的项目列表
+
+- **URL**: `/api/projects/founder`
+- **方法**: `GET`
+- **查询参数**:
+  - `user_id`: 用户ID（Auth0用户标识，必需）
+  - 其他过滤参数与项目列表查询相同
+
+### 9. 获取我参与的项目列表
+
+- **URL**: `/api/projects/participant`
+- **方法**: `GET`
+- **查询参数**:
+  - `user_id`: 用户ID（Auth0用户标识，必需）
+  - 其他过滤参数与项目列表查询相同 
